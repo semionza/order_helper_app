@@ -2,17 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config.dart'; // Импортируем наш конфиг
 
 class GeminiService {
-  // Вставьте сюда ваш ключ от Gemini API (или используйте переменную окружения)
-  static const String _apiKey = 'YOUR_GEMINI_API_KEY';
-  
-  // Используем актуальную мультимодальную модель
-  static const String _model = 'gemini-2.5-flash';
+  // Используем актуальную модель и ключ из файла конфигурации
+  static const String _model = 'gemini-3.6-flash';
 
   static Future<List<Map<String, dynamic>>> analyzeShelfPhoto(String imagePath) async {
-    if (_apiKey == 'YOUR_GEMINI_API_KEY') {
-      debugPrint('Gemini API Key не настроен!');
+    if (Config.geminiApiKey == 'YOUR_GEMINI_API_KEY' || Config.geminiApiKey.isEmpty) {
+      debugPrint('Gemini API Key не настроен в lib/config.dart!');
       return [];
     }
 
@@ -21,10 +19,10 @@ class GeminiService {
       final bytes = await file.readAsBytes();
       final base64Image = base64Encode(bytes);
 
-      final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent?key=$_apiKey');
+      final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent?key=${Config.geminiApiKey}');
 
       final prompt = '''
-      Проанализируй эту фотографию вещей или места хранения в доме.
+      Проанализируй эту фотографию полки или места хранения в доме.
       Верни строго JSON-массив объектов без какого-либо дополнительного текста, markdown-разметки или префиксов.
       Каждый объект должен содержать следующие поля:
       - "name": строка (название найденного предмета на русском языке)
