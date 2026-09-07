@@ -5,6 +5,7 @@ import 'models/room.dart';
 import 'models/storage_unit.dart';
 import 'models/shelf.dart';
 import 'models/item.dart';
+import 'models/room_cleanup_session.dart';
 import 'screens/home_screen.dart';
 
 // Глобальная переменная для доступа к базе данных из любого места
@@ -19,7 +20,7 @@ void main() async {
 
   // Открываем или создаем базу данных Isar со всеми нашими моделями
   isar = await Isar.open(
-    [RoomSchema, StorageUnitSchema, ShelfSchema, ItemSchema],
+    [RoomSchema, StorageUnitSchema, ShelfSchema, ItemSchema, RoomCleanupSessionSchema],
     directory: dir.path,
   );
 

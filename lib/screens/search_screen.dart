@@ -232,10 +232,10 @@ class _SearchScreenState extends State<SearchScreen> {
           controller: _searchController,
           autofocus: true,
           cursorColor: Colors.white,
-          style: const TextStyle(color: Colors.white, fontSize: 18),
+          style: const TextStyle(color: Colors.black, fontSize: 18),
           decoration: InputDecoration(
             hintText: 'Поиск вещей...',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
+            hintStyle: TextStyle(color: Colors.grey.withOpacity(0.6)),
             border: InputBorder.none,
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(

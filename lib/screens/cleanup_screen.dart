@@ -3,7 +3,12 @@ import 'package:camera/camera.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
 
 class CleanupScreen extends StatefulWidget {
-  const CleanupScreen({super.key});
+  final String title; // Добавляем настраиваемый заголовок/подсказку
+
+  const CleanupScreen({
+    super.key, 
+    this.title = 'Сделайте фото полки для анализа', // Дефолтное значение
+  });
 
   @override
   State<CleanupScreen> createState() => _CleanupScreenState();
@@ -95,7 +100,7 @@ Future<void> _takePictureAndDetect() async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Уборка и анализ полки (AI)'),
+        title: Text(widget.title), // Используем переданный заголовок
       ),
       body: _isCameraInitialized
           ? Stack(

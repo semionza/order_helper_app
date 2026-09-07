@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'rooms_screen.dart';
 import 'cleanup_screen.dart';
-import 'search_screen.dart'; // Импортируем экран поиска
+import 'search_screen.dart';
+import 'room_cleanup_result_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -12,7 +13,6 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Гид по порядку'),
         actions: [
-          // Кнопка глобального поиска в шапке
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -46,13 +46,26 @@ class HomeScreen extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.green, size: 32),
               title: const Text('Уборка комнаты', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              subtitle: const Text('Анализ полок через камеру'),
+              subtitle: const Text('Анализ неубранной комнаты и поиск разбросанных вещей'),
               trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                final photoPath = await Navigator.push<String>(
                   context,
-                  MaterialPageRoute(builder: (context) => const CleanupScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const CleanupScreen(
+                      title: 'Сделайте фото неубранной комнаты',
+                    ),
+                  ),
                 );
+
+                if (photoPath != null && context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RoomCleanupResultScreen(photoPath: photoPath),
+                    ),
+                  );
+                }
               },
             ),
           ),
