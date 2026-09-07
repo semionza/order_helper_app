@@ -8,6 +8,7 @@ import '../models/item.dart';
 import '../services/gemini_service.dart';
 import 'cleanup_screen.dart';
 import 'items_screen.dart';
+import 'add_existing_items_screen.dart';
 
 class ShelvesScreen extends StatefulWidget {
   final StorageUnit storageUnit;
@@ -284,6 +285,23 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                             ),
                           ),
                         ],
+                        const SizedBox(height: 8),
+                        // Кнопка выбора существующих вещей из базы
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddExistingItemsScreen(targetShelf: shelf),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.playlist_add, color: Colors.blue),
+                            label: const Text('Добавить из базы (выбрать существующие)'),
+                          ),
+                        ),
                       ],
                     ),
                   ),

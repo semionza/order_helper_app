@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -19,6 +20,19 @@ class ItemsScreen extends StatefulWidget {
 }
 
 class _ItemsScreenState extends State<ItemsScreen> {
+  // Список доступных языков для голосового ввода
+  static int _currentLangIndex = 0;
+  final List<Map<String, String>> _languages = [
+    {'code': 'ru_RU', 'label': 'RU'},
+    {'code': 'en_US', 'label': 'EN'},
+    {'code': 'he_IL', 'label': 'HE'},
+  ];
+
+  void _cycleLanguage() {
+    setState(() {
+      _currentLangIndex = (_currentLangIndex + 1) % _languages.length;
+    });
+  }
   // Универсальный диалог для создания или редактирования вещи
   void _showItemDialog(BuildContext context, {Item? itemToEdit}) {
     final isEditing = itemToEdit != null;
@@ -43,7 +57,12 @@ class _ItemsScreenState extends State<ItemsScreen> {
                 bool available = await speech.initialize();
                 if (available) {
                   setDialogState(() => isListening = true);
+                  
+                  final activeLocaleId = _languages[_currentLangIndex]['code'];
+                  debugPrint('DEBUG: Запуск голосового ввода с локалью -> $activeLocaleId');
+
                   speech.listen(
+                    localeId: activeLocaleId,
                     onResult: (val) {
                       setDialogState(() {
                         nameController.text = val.recognizedWords;
@@ -64,7 +83,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Название с микрофоном
+                    // Название с микрофоном и переключателем языка
                     Row(
                       children: [
                         Expanded(
@@ -74,9 +93,43 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             autofocus: true,
                           ),
                         ),
+                        const SizedBox(width: 4),
+                        // Клик по языковому бейджу переключает язык циклично
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              _currentLangIndex = (_currentLangIndex + 1) % _languages.length;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.blue),
+                              borderRadius: BorderRadius.circular(4),
+                              color: Colors.blue.shade50,
+                            ),
+                            child: Text(
+                              _languages[_currentLangIndex]['label']!,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue),
+                            ),
+                          ),
+                        ),
+                        // Кнопка микрофона: обычный тап — запись, долгое нажатие — смена языка
                         IconButton(
                           icon: Icon(isListening ? Icons.mic : Icons.mic_none, color: isListening ? Colors.red : Colors.blue),
                           onPressed: listen,
+                          onLongPress: () {
+                            setDialogState(() {
+                              _currentLangIndex = (_currentLangIndex + 1) % _languages.length;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Язык изменен на: ${_languages[_currentLangIndex]['label']}'),
+                                duration: const Duration(milliseconds: 600),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
