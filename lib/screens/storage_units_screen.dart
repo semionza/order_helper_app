@@ -3,6 +3,8 @@ import 'package:isar/isar.dart';
 import '../main.dart';
 import '../models/room.dart';
 import '../models/storage_unit.dart';
+import '../models/shelf.dart';
+import '../models/item.dart';
 import 'shelves_screen.dart';
 
 class StorageUnitsScreen extends StatelessWidget {
@@ -50,6 +52,91 @@ class StorageUnitsScreen extends StatelessWidget {
     );
   }
 
+  // Диалог редактирования или удаления шкафа
+  void _showEditStorageDialog(BuildContext context, StorageUnit unit) {
+    final controller = TextEditingController(text: unit.name);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Редактировать шкаф'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: 'Название мебели'),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () async {
+                // Подтверждение и удаление шкафа
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Удалить шкаф?'),
+                    content: const Text('Все полки этого шкафа будут удалены. Вещи на них сохранятся, но перейдут в категорию "Без места".'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Удалить'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await isar.writeTxn(() async {
+                    // Находим все полки этого шкафа
+                    final shelves = await isar.shelfs.filter().storageUnitIdEqualTo(unit.id).findAll();
+                    
+                    for (var shelf in shelves) {
+                      // Находим все вещи на этой полке и отвязываем их (shelfId = null)
+                      final items = await isar.items.filter().shelfIdEqualTo(shelf.id).findAll();
+                      for (var item in items) {
+                        item.shelfId = null;
+                        await isar.items.put(item);
+                      }
+                      // Удаляем полку
+                      await isar.shelfs.delete(shelf.id);
+                    }
+
+                    // Удаляем сам шкаф
+                    await isar.storageUnits.delete(unit.id);
+                  });
+
+                  if (context.mounted) {
+                    Navigator.pop(context); // Закрыть окно редактирования
+                  }
+                }
+              },
+              child: const Text('Удалить шкаф'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Отмена'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = controller.text.trim();
+                if (name.isNotEmpty) {
+                  await isar.writeTxn(() async {
+                    unit.name = name;
+                    await isar.storageUnits.put(unit);
+                  });
+                }
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Сохранить'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,6 +169,7 @@ class StorageUnitsScreen extends StatelessWidget {
                 child: ListTile(
                   leading: const Icon(Icons.kitchen, color: Colors.blue),
                   title: Text(unit.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Удерживайте для редактирования', style: TextStyle(fontSize: 11, color: Colors.grey)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     Navigator.push(
@@ -89,6 +177,8 @@ class StorageUnitsScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => ShelvesScreen(storageUnit: unit)),
                     );
                   },
+                  // Добавлено длинное нажатие на шкаф
+                  onLongPress: () => _showEditStorageDialog(context, unit),
                 ),
               );
             },

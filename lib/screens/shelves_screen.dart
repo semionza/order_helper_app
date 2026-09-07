@@ -5,7 +5,7 @@ import '../main.dart';
 import '../models/storage_unit.dart';
 import '../models/shelf.dart';
 import '../models/item.dart';
-import '../services/gemini_service.dart'; // Импортируем наш сервис
+import '../services/gemini_service.dart';
 import 'cleanup_screen.dart';
 import 'items_screen.dart';
 
@@ -19,7 +19,6 @@ class ShelvesScreen extends StatefulWidget {
 }
 
 class _ShelvesScreenState extends State<ShelvesScreen> {
-  // Состояние загрузки для конкретной полки во время анализа ИИ
   final Map<int, bool> _isAnalyzing = {};
 
   void _showAddShelfDialog(BuildContext context) {
@@ -62,7 +61,83 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
     );
   }
 
-  // Метод запуска анализа фотографии полки через Gemini
+  // Диалог редактирования или удаления полки
+  void _showEditShelfDialog(BuildContext context, Shelf shelf) {
+    final controller = TextEditingController(text: shelf.name);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Редактировать полку'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: 'Название полки'),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Удалить полку?'),
+                    content: const Text('Все вещи с этой полки сохранятся, но перейдут в категорию "Без места".'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Удалить'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await isar.writeTxn(() async {
+                    // Отвязываем все вещи с этой полки (shelfId = null)
+                    final items = await isar.items.filter().shelfIdEqualTo(shelf.id).findAll();
+                    for (var item in items) {
+                      item.shelfId = null;
+                      await isar.items.put(item);
+                    }
+
+                    // Удаляем саму полку
+                    await isar.shelfs.delete(shelf.id);
+                  });
+
+                  if (context.mounted) {
+                    Navigator.pop(context); // Закрыть окно редактирования
+                  }
+                }
+              },
+              child: const Text('Удалить полку'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Отмена'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = controller.text.trim();
+                if (name.isNotEmpty) {
+                  await isar.writeTxn(() async {
+                    shelf.name = name;
+                    await isar.shelfs.put(shelf);
+                  });
+                }
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Сохранить'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _analyzeShelfWithAI(Shelf shelf) async {
     if (shelf.photoPath == null) return;
 
@@ -94,7 +169,7 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('AI не смог распознать предметы или не настроен API ключ.')),
+            const SnackBar(key: Key('error_snackbar'), content: Text('AI не смог распознать предметы или не настроен API ключ.')),
           );
         }
       }
@@ -147,6 +222,8 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                       MaterialPageRoute(builder: (context) => ItemsScreen(shelf: shelf)),
                     );
                   },
+                  // Добавлено длинное нажатие на полку
+                  onLongPress: () => _showEditShelfDialog(context, shelf),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -155,7 +232,13 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(shelf.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(shelf.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                const Text('Удерживайте для редактирования', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                              ],
+                            ),
                             IconButton(
                               icon: const Icon(Icons.camera_alt, color: Colors.blue),
                               onPressed: () async {
@@ -186,7 +269,6 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Кнопка вызова AI анализа
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
