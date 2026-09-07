@@ -125,7 +125,11 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   // Вспомогательный метод для поиска названий полки, шкафа и комнаты по ID полки
-  Future<Map<String, String>> _resolveItemLocation(int shelfId) async {
+  Future<Map<String, String>> _resolveItemLocation(int? shelfId) async {
+    if (shelfId == null) {
+      return {'room': 'Без места', 'unit': 'Не привязано', 'shelf': '—'};
+    }
+
     final shelf = await isar.shelfs.get(shelfId);
     if (shelf == null) return {'room': '?', 'unit': '?', 'shelf': '?'};
 

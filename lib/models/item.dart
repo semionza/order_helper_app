@@ -12,7 +12,7 @@ class Item {
 
   List<String> tags = [];
 
-  String? photoPath; // Путь к фотографии конкретной вещи
+  String? photoPath;
 
-  late int shelfId;
+  int? shelfId; // Теперь поле может быть пустым (если место не выбрано)
 }

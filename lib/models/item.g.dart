@@ -104,7 +104,7 @@ Item _itemDeserialize(
   object.name = reader.readString(offsets[0]);
   object.photoPath = reader.readStringOrNull(offsets[1]);
   object.quantity = reader.readLong(offsets[2]);
-  object.shelfId = reader.readLong(offsets[3]);
+  object.shelfId = reader.readLongOrNull(offsets[3]);
   object.tags = reader.readStringList(offsets[4]) ?? [];
   return object;
 }
@@ -123,7 +123,7 @@ P _itemDeserializeProp<P>(
     case 2:
       return (reader.readLong(offset)) as P;
     case 3:
-      return (reader.readLong(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 4:
       return (reader.readStringList(offset) ?? []) as P;
     default:
@@ -597,7 +597,23 @@ extension ItemQueryFilter on QueryBuilder<Item, Item, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Item, Item, QAfterFilterCondition> shelfIdEqualTo(int value) {
+  QueryBuilder<Item, Item, QAfterFilterCondition> shelfIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'shelfId',
+      ));
+    });
+  }
+
+  QueryBuilder<Item, Item, QAfterFilterCondition> shelfIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'shelfId',
+      ));
+    });
+  }
+
+  QueryBuilder<Item, Item, QAfterFilterCondition> shelfIdEqualTo(int? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'shelfId',
@@ -607,7 +623,7 @@ extension ItemQueryFilter on QueryBuilder<Item, Item, QFilterCondition> {
   }
 
   QueryBuilder<Item, Item, QAfterFilterCondition> shelfIdGreaterThan(
-    int value, {
+    int? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -620,7 +636,7 @@ extension ItemQueryFilter on QueryBuilder<Item, Item, QFilterCondition> {
   }
 
   QueryBuilder<Item, Item, QAfterFilterCondition> shelfIdLessThan(
-    int value, {
+    int? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -633,8 +649,8 @@ extension ItemQueryFilter on QueryBuilder<Item, Item, QFilterCondition> {
   }
 
   QueryBuilder<Item, Item, QAfterFilterCondition> shelfIdBetween(
-    int lower,
-    int upper, {
+    int? lower,
+    int? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -1039,7 +1055,7 @@ extension ItemQueryProperty on QueryBuilder<Item, Item, QQueryProperty> {
     });
   }
 
-  QueryBuilder<Item, int, QQueryOperations> shelfIdProperty() {
+  QueryBuilder<Item, int?, QQueryOperations> shelfIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'shelfId');
     });

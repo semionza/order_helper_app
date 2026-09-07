@@ -5,7 +5,9 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../main.dart';
 import '../models/shelf.dart';
 import '../models/item.dart';
-import 'cleanup_screen.dart'; // Используем наш экран камеры
+import '../models/storage_unit.dart';
+import '../models/room.dart';
+import 'cleanup_screen.dart';
 
 class ItemsScreen extends StatefulWidget {
   final Shelf shelf;
@@ -17,14 +19,17 @@ class ItemsScreen extends StatefulWidget {
 }
 
 class _ItemsScreenState extends State<ItemsScreen> {
-  void _showAddItemDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final quantityController = TextEditingController(text: '1');
-    final tagsController = TextEditingController();
+  // Универсальный диалог для создания или редактирования вещи
+  void _showItemDialog(BuildContext context, {Item? itemToEdit}) {
+    final isEditing = itemToEdit != null;
     
-    String? itemPhotoPath;
+    final nameController = TextEditingController(text: isEditing ? itemToEdit.name : '');
+    final quantityController = TextEditingController(text: isEditing ? itemToEdit.quantity.toString() : '1');
+    final tagsController = TextEditingController(text: isEditing ? itemToEdit.tags.join(', ') : '');
     
-    // Инициализация сервиса распознавания речи
+    String? itemPhotoPath = isEditing ? itemToEdit.photoPath : null;
+    int? selectedShelfId = isEditing ? itemToEdit.shelfId : widget.shelf.id;
+
     final stt.SpeechToText speech = stt.SpeechToText();
     bool isListening = false;
 
@@ -33,14 +38,9 @@ class _ItemsScreenState extends State<ItemsScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            
-            // Функция запуска/остановки голосового ввода
             void listen() async {
               if (!isListening) {
-                bool available = await speech.initialize(
-                  onStatus: (status) => debugPrint('Статус речи: $status'),
-                  onError: (error) => debugPrint('Ошибка речи: $error'),
-                );
+                bool available = await speech.initialize();
                 if (available) {
                   setDialogState(() => isListening = true);
                   speech.listen(
@@ -58,28 +58,25 @@ class _ItemsScreenState extends State<ItemsScreen> {
             }
 
             return AlertDialog(
-              title: Text('Новая вещь: ${widget.shelf.name}'),
+              title: Text(isEditing ? 'Редактировать вещь' : 'Новая вещь'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Поле названия с кнопкой микрофона
+                    // Название с микрофоном
                     Row(
                       children: [
                         Expanded(
                           child: TextField(
                             controller: nameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Название вещи',
-                              hintText: 'Нажмите микрофон для надиктовывания',
-                            ),
+                            decoration: const InputDecoration(labelText: 'Название вещи'),
                             autofocus: true,
                           ),
                         ),
                         IconButton(
                           icon: Icon(isListening ? Icons.mic : Icons.mic_none, color: isListening ? Colors.red : Colors.blue),
                           onPressed: listen,
-                          tooltip: 'Надиктовать голосом',
                         ),
                       ],
                     ),
@@ -95,8 +92,45 @@ class _ItemsScreenState extends State<ItemsScreen> {
                       decoration: const InputDecoration(labelText: 'Теги (через запятую)', hintText: 'одежда, зима'),
                     ),
                     const SizedBox(height: 16),
-                    
-                    // Кнопка и превью фотографии вещи
+
+                    // Выбор местоположения (Полка / Без места)
+                    const Text('Место хранения:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 4),
+                    FutureBuilder<List<ShelfInfoDropdown>>(
+                      future: _loadAllShelvesForDropdown(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const LinearProgressIndicator();
+                        
+                        final shelvesList = snapshot.data!;
+
+                        return DropdownButtonFormField<int?>(
+                          value: selectedShelfId,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          ),
+                          items: [
+                            const DropdownMenuItem<int?>(
+                              value: null,
+                              child: Text('📍 Без полки (пока не решил)', style: TextStyle(color: Colors.grey)),
+                            ),
+                            ...shelvesList.map((s) => DropdownMenuItem<int?>(
+                              value: s.shelfId,
+                              child: Text(s.fullName, overflow: TextOverflow.ellipsis),
+                            )),
+                          ],
+                          onChanged: (val) {
+                            setDialogState(() {
+                              selectedShelfId = val;
+                            });
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Фотография
                     Row(
                       children: [
                         ElevatedButton.icon(
@@ -112,7 +146,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             }
                           },
                           icon: const Icon(Icons.camera_alt),
-                          label: const Text('Фото вещи'),
+                          label: const Text('Фото'),
                         ),
                         const SizedBox(width: 12),
                         if (itemPhotoPath != null)
@@ -144,26 +178,34 @@ class _ItemsScreenState extends State<ItemsScreen> {
                     final name = nameController.text.trim();
                     final quantity = int.tryParse(quantityController.text.trim()) ?? 1;
                     final tagsRaw = tagsController.text.trim();
-                    
                     final tags = tagsRaw.isNotEmpty
                         ? tagsRaw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
                         : <String>[];
 
                     if (name.isNotEmpty) {
-                      final newItem = Item()
-                        ..name = name
-                        ..quantity = quantity
-                        ..tags = tags
-                        ..photoPath = itemPhotoPath
-                        ..shelfId = widget.shelf.id;
-
                       await isar.writeTxn(() async {
-                        await isar.items.put(newItem);
+                        if (isEditing) {
+                          itemToEdit
+                            ..name = name
+                            ..quantity = quantity
+                            ..tags = tags
+                            ..photoPath = itemPhotoPath
+                            ..shelfId = selectedShelfId;
+                          await isar.items.put(itemToEdit);
+                        } else {
+                          final newItem = Item()
+                            ..name = name
+                            ..quantity = quantity
+                            ..tags = tags
+                            ..photoPath = itemPhotoPath
+                            ..shelfId = selectedShelfId;
+                          await isar.items.put(newItem);
+                        }
                       });
                     }
                     if (context.mounted) Navigator.pop(context);
                   },
-                  child: const Text('Сохранить'),
+                  child: Text(isEditing ? 'Сохранить' : 'Добавить'),
                 ),
               ],
             );
@@ -171,6 +213,26 @@ class _ItemsScreenState extends State<ItemsScreen> {
         );
       },
     );
+  }
+
+  // Вспомогательный метод для загрузки всех полок с их иерархией для выпадающего списка
+  Future<List<ShelfInfoDropdown>> _loadAllShelvesForDropdown() async {
+    final allShelves = await isar.shelfs.where().findAll();
+    List<ShelfInfoDropdown> result = [];
+
+    for (var shelf in allShelves) {
+      final unit = await isar.storageUnits.get(shelf.storageUnitId);
+      final room = unit != null ? await isar.rooms.get(unit.roomId) : null;
+
+      final roomName = room?.name ?? 'Комната';
+      final unitName = unit?.name ?? 'Шкаф';
+
+      result.add(ShelfInfoDropdown(
+        shelfId: shelf.id,
+        fullName: '$roomName ➔ $unitName ➔ ${shelf.name}',
+      ));
+    }
+    return result;
   }
 
   @override
@@ -236,13 +298,23 @@ class _ItemsScreenState extends State<ItemsScreen> {
                     ],
                   ),
                   isThreeLine: item.tags.isNotEmpty,
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: () async {
-                      await isar.writeTxn(() async {
-                        await isar.items.delete(item.id);
-                      });
-                    },
+                  // Кнопки редактирования и удаления
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+                        onPressed: () => _showItemDialog(context, itemToEdit: item),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () async {
+                          await isar.writeTxn(() async {
+                            await isar.items.delete(item.id);
+                          });
+                        },
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -251,9 +323,17 @@ class _ItemsScreenState extends State<ItemsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddItemDialog(context),
+        onPressed: () => _showItemDialog(context),
         child: const Icon(Icons.add),
       ),
     );
   }
+}
+
+// Вспомогательный класс для отображения полного пути полки в выпадающем списке
+class ShelfInfoDropdown {
+  final int shelfId;
+  final String fullName;
+
+  ShelfInfoDropdown({required this.shelfId, required this.fullName});
 }
