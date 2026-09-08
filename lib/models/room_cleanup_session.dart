@@ -11,6 +11,7 @@ class DetectedItemData {
   String? recommendation;
   bool isSelected = true;
   int? matchedIsarItemId; // ID существующей вещи в Isar, если найдена
+  int matchConfidence = 0; // Процент схожести
 }
 
 @collection

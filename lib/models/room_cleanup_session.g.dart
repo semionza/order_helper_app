@@ -719,28 +719,33 @@ const DetectedItemDataSchema = Schema(
       name: r'locationPath',
       type: IsarType.string,
     ),
-    r'matchedIsarItemId': PropertySchema(
+    r'matchConfidence': PropertySchema(
       id: 2,
+      name: r'matchConfidence',
+      type: IsarType.long,
+    ),
+    r'matchedIsarItemId': PropertySchema(
+      id: 3,
       name: r'matchedIsarItemId',
       type: IsarType.long,
     ),
     r'name': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'quantity': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'quantity',
       type: IsarType.long,
     ),
     r'recommendation': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'recommendation',
       type: IsarType.string,
     ),
     r'tags': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'tags',
       type: IsarType.stringList,
     )
@@ -788,11 +793,12 @@ void _detectedItemDataSerialize(
 ) {
   writer.writeBool(offsets[0], object.isSelected);
   writer.writeString(offsets[1], object.locationPath);
-  writer.writeLong(offsets[2], object.matchedIsarItemId);
-  writer.writeString(offsets[3], object.name);
-  writer.writeLong(offsets[4], object.quantity);
-  writer.writeString(offsets[5], object.recommendation);
-  writer.writeStringList(offsets[6], object.tags);
+  writer.writeLong(offsets[2], object.matchConfidence);
+  writer.writeLong(offsets[3], object.matchedIsarItemId);
+  writer.writeString(offsets[4], object.name);
+  writer.writeLong(offsets[5], object.quantity);
+  writer.writeString(offsets[6], object.recommendation);
+  writer.writeStringList(offsets[7], object.tags);
 }
 
 DetectedItemData _detectedItemDataDeserialize(
@@ -804,11 +810,12 @@ DetectedItemData _detectedItemDataDeserialize(
   final object = DetectedItemData();
   object.isSelected = reader.readBool(offsets[0]);
   object.locationPath = reader.readStringOrNull(offsets[1]);
-  object.matchedIsarItemId = reader.readLongOrNull(offsets[2]);
-  object.name = reader.readString(offsets[3]);
-  object.quantity = reader.readLong(offsets[4]);
-  object.recommendation = reader.readStringOrNull(offsets[5]);
-  object.tags = reader.readStringList(offsets[6]) ?? [];
+  object.matchConfidence = reader.readLong(offsets[2]);
+  object.matchedIsarItemId = reader.readLongOrNull(offsets[3]);
+  object.name = reader.readString(offsets[4]);
+  object.quantity = reader.readLong(offsets[5]);
+  object.recommendation = reader.readStringOrNull(offsets[6]);
+  object.tags = reader.readStringList(offsets[7]) ?? [];
   return object;
 }
 
@@ -824,14 +831,16 @@ P _detectedItemDataDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readLongOrNull(offset)) as P;
-    case 3:
-      return (reader.readString(offset)) as P;
-    case 4:
       return (reader.readLong(offset)) as P;
+    case 3:
+      return (reader.readLongOrNull(offset)) as P;
+    case 4:
+      return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
       return (reader.readStringList(offset) ?? []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1000,6 +1009,62 @@ extension DetectedItemDataQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'locationPath',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<DetectedItemData, DetectedItemData, QAfterFilterCondition>
+      matchConfidenceEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'matchConfidence',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<DetectedItemData, DetectedItemData, QAfterFilterCondition>
+      matchConfidenceGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'matchConfidence',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<DetectedItemData, DetectedItemData, QAfterFilterCondition>
+      matchConfidenceLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'matchConfidence',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<DetectedItemData, DetectedItemData, QAfterFilterCondition>
+      matchConfidenceBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'matchConfidence',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }

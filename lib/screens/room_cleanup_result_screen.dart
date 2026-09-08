@@ -8,6 +8,7 @@ import '../models/storage_unit.dart';
 import '../models/room.dart';
 import '../models/room_cleanup_session.dart';
 import '../services/gemini_service.dart';
+import '../services/matching_service.dart';
 import '../widgets/edit_item_form_dialog.dart';
 
 class RoomCleanupResultScreen extends StatefulWidget {
@@ -49,26 +50,34 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
         final quantity = itemMap['quantity'] ?? 1;
         final List<String> tags = List<String>.from(itemMap['tags'] ?? []);
 
-        final existingItem = await isar.items
-            .filter()
-            .nameContains(itemName, caseSensitive: false)
-            .findFirst();
-
+        // Используем MatchingService для поиска лучшего совпадения в базе по имени
+        final similarMatches = await MatchingService.findSimilarItems(itemName);
+        
+        int? matchedId;
+        int confidence = 0;
         String? locationPath;
         String? recommendation;
 
-        if (existingItem != null && existingItem.shelfId != null) {
-          final shelf = await isar.shelfs.get(existingItem.shelfId!);
-          if (shelf != null) {
-            final storageUnit = await isar.storageUnits.get(shelf.storageUnitId);
-            if (storageUnit != null) {
-              final room = await isar.rooms.get(storageUnit.roomId);
-              if (room != null) {
-                locationPath = '${room.name} ➔ ${storageUnit.name} ➔ ${shelf.name}';
+        if (similarMatches.isNotEmpty && similarMatches.first.confidencePercent >= 45) {
+          // Если нашли похожее с уверенностью >= 45%
+          final bestMatch = similarMatches.first;
+          matchedId = bestMatch.item.id;
+          confidence = bestMatch.confidencePercent;
+
+          if (bestMatch.item.shelfId != null) {
+            final shelf = await isar.shelfs.get(bestMatch.item.shelfId!);
+            if (shelf != null) {
+              final storageUnit = await isar.storageUnits.get(shelf.storageUnitId);
+              if (storageUnit != null) {
+                final room = await isar.rooms.get(storageUnit.roomId);
+                if (room != null) {
+                  locationPath = '${room.name} ➔ ${storageUnit.name} ➔ ${shelf.name}';
+                }
               }
             }
           }
         } else {
+          // Ищем рекомендации по тегам
           for (var dbItem in await isar.items.where().findAll()) {
             if (dbItem.shelfId != null && dbItem.tags.any((t) => tags.contains(t))) {
               final shelf = await isar.shelfs.get(dbItem.shelfId!);
@@ -94,7 +103,8 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
           ..locationPath = locationPath
           ..recommendation = recommendation
           ..isSelected = true
-          ..matchedIsarItemId = existingItem?.id;
+          ..matchedIsarItemId = matchedId
+          ..matchConfidence = confidence;
 
         detectedList.add(data);
       }
@@ -115,9 +125,97 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
     });
   }
 
+  Future<void> _saveSessionState() async {
+    if (_activeSession != null) {
+      await isar.writeTxn(() async {
+        await isar.roomCleanupSessions.put(_activeSession!);
+      });
+    }
+  }
+
+  // Диалог ручного выбора или смены связи с базой
+  Future<void> _showMatchSelectionDialog(DetectedItemData itemData) async {
+    final similarMatches = await MatchingService.findSimilarItems(itemData.name);
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Выбрать связь для "${itemData.name}"'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.add_circle, color: Colors.orange),
+                  title: const Text('Создать как новый предмет'),
+                  subtitle: const Text('Не связывать с существующими в базе'),
+                  onTap: () async {
+                    setState(() {
+                      itemData.matchedIsarItemId = null;
+                      itemData.locationPath = null;
+                      itemData.matchConfidence = 0;
+                    });
+                    await _saveSessionState();
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                ),
+                const Divider(),
+                const Text('Похожие вещи в базе:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                if (similarMatches.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text('Похожих вещей в базе не найдено', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  ),
+                ...similarMatches.map((match) {
+                  return ListTile(
+                    leading: const Icon(Icons.link, color: Colors.blue),
+                    title: Text(match.item.name),
+                    subtitle: Text('Совпадение: ${match.confidencePercent}%'),
+                    trailing: itemData.matchedIsarItemId == match.item.id 
+                        ? const Icon(Icons.check, color: Colors.green) 
+                        : null,
+                    onTap: () async {
+                      setState(() {
+                        itemData.matchedIsarItemId = match.item.id;
+                        itemData.matchConfidence = match.confidencePercent;
+                      });
+                      
+                      // Подтягиваем путь расположения для выбранного предмета
+                      if (match.item.shelfId != null) {
+                        final shelf = await isar.shelfs.get(match.item.shelfId!);
+                        if (shelf != null) {
+                          final storageUnit = await isar.storageUnits.get(shelf.storageUnitId);
+                          if (storageUnit != null) {
+                            final room = await isar.rooms.get(storageUnit.roomId);
+                            if (room != null) {
+                              itemData.locationPath = '${room.name} ➔ ${storageUnit.name} ➔ ${shelf.name}';
+                            }
+                          }
+                        }
+                      }
+
+                      await _saveSessionState();
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть')),
+          ],
+        );
+      },
+    );
+  }
+
   // Открытие формы редактирования вещи (как в каталоге)
   Future<void> _editItem(DetectedItemData detectedItem) async {
-    // Находим реальный Item в базе или создаем временный объект для формы
     Item item;
     if (detectedItem.matchedIsarItemId != null) {
       item = (await isar.items.get(detectedItem.matchedIsarItemId!)) ?? Item();
@@ -136,18 +234,13 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
       context: context,
       item: item,
       onSaved: () async {
-        // Синхронизируем изменения обратно в сессию
         setState(() {
           detectedItem.name = item.name;
           detectedItem.quantity = item.quantity;
           detectedItem.tags = item.tags;
           detectedItem.matchedIsarItemId = item.id;
         });
-        if (_activeSession != null) {
-          await isar.writeTxn(() async {
-            await isar.roomCleanupSessions.put(_activeSession!);
-          });
-        }
+        await _saveSessionState();
       },
     );
   }
@@ -200,49 +293,85 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
 
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                            child: InkWell(
-                              onTap: () => _editItem(itemData), // Открывает полную форму редактирования
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: itemData.isSelected,
-                                      onChanged: (val) async {
-                                        setState(() {
-                                          itemData.isSelected = val ?? true;
-                                        });
-                                        await isar.writeTxn(() async {
-                                          await isar.roomCleanupSessions.put(_activeSession!);
-                                        });
-                                      },
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            itemData.name,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Checkbox(
+                                        value: itemData.isSelected,
+                                        onChanged: (val) async {
+                                          setState(() {
+                                            itemData.isSelected = val ?? true;
+                                          });
+                                          await _saveSessionState();
+                                        },
+                                      ),
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () => _editItem(itemData),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                itemData.name,
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text('Кол-во: ${itemData.quantity} | Теги: ${itemData.tags.join(', ')}'),
+                                            ],
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text('Кол-во: ${itemData.quantity} | Теги: ${itemData.tags.join(', ')}'),
-                                          const SizedBox(height: 4),
-                                          itemData.locationPath != null
-                                              ? Text(
-                                                  '🟢 Есть в базе: ${itemData.locationPath}',
-                                                  style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w600),
-                                                )
-                                              : Text(
-                                                  '💡 Рекомендация: ${itemData.recommendation}',
-                                                  style: const TextStyle(color: Colors.deepPurple, fontSize: 12, fontWeight: FontWeight.w600),
-                                                ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                        onPressed: () => _editItem(itemData),
+                                        tooltip: 'Редактировать вещь',
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(height: 8),
+                                  // Интерактивный блок выбора связи с существующей вещью из базы
+                                  InkWell(
+                                    onTap: () => _showMatchSelectionDialog(itemData),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: itemData.matchedIsarItemId != null ? Colors.green.shade50 : Colors.orange.shade50,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: itemData.matchedIsarItemId != null ? Colors.green.shade200 : Colors.orange.shade200,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            itemData.matchedIsarItemId != null ? Icons.link : Icons.help_outline,
+                                            size: 16,
+                                            color: itemData.matchedIsarItemId != null ? Colors.green : Colors.orange,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              itemData.matchedIsarItemId != null && itemData.locationPath != null
+                                                  ? '🟢 В базе (${itemData.matchConfidence}%): ${itemData.locationPath}'
+                                                  : '🟡 Новый предмет (нажмите для выбора связи)',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: itemData.matchedIsarItemId != null ? Colors.green.shade800 : Colors.orange.shade800,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const Icon(Icons.arrow_drop_down, size: 18, color: Colors.grey),
                                         ],
                                       ),
                                     ),
-                                    const Icon(Icons.edit, size: 18, color: Colors.grey),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -285,7 +414,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                         await isar.items.put(newItem);
                       }
                     }
-                    // Удаляем текущую сессию из архива после успешного сохранения вещей
                     await isar.roomCleanupSessions.delete(_activeSession!.id);
                   });
 
