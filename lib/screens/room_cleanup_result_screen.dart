@@ -35,13 +35,10 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
     RoomCleanupSession? session;
 
     if (widget.sessionId != null) {
-      // Открываем конкретную сессию из истории
       session = await isar.roomCleanupSessions.get(widget.sessionId!);
     } else if (widget.photoPath == null) {
-      // Открываем последнюю актуальную сессию
       session = await isar.roomCleanupSessions.where().sortByCreatedAtDesc().findFirst();
     } else {
-      // Создаем новую сессию по новому фото
       final results = await GeminiService.analyzeRoomCleanupPhoto(widget.photoPath!);
       final List<DetectedItemData> detectedList = [];
 
@@ -50,7 +47,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
         final quantity = itemMap['quantity'] ?? 1;
         final List<String> tags = List<String>.from(itemMap['tags'] ?? []);
 
-        // Используем MatchingService для поиска лучшего совпадения в базе по имени
         final similarMatches = await MatchingService.findSimilarItems(itemName);
         
         int? matchedId;
@@ -59,7 +55,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
         String? recommendation;
 
         if (similarMatches.isNotEmpty && similarMatches.first.confidencePercent >= 45) {
-          // Если нашли похожее с уверенностью >= 45%
           final bestMatch = similarMatches.first;
           matchedId = bestMatch.item.id;
           confidence = bestMatch.confidencePercent;
@@ -77,7 +72,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
             }
           }
         } else {
-          // Ищем рекомендации по тегам
           for (var dbItem in await isar.items.where().findAll()) {
             if (dbItem.shelfId != null && dbItem.tags.any((t) => tags.contains(t))) {
               final shelf = await isar.shelfs.get(dbItem.shelfId!);
@@ -133,7 +127,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
     }
   }
 
-  // Диалог ручного выбора или смены связи с базой
   Future<void> _showMatchSelectionDialog(DetectedItemData itemData) async {
     final similarMatches = await MatchingService.findSimilarItems(itemData.name);
 
@@ -184,7 +177,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                         itemData.matchConfidence = match.confidencePercent;
                       });
                       
-                      // Подтягиваем путь расположения для выбранного предмета
                       if (match.item.shelfId != null) {
                         final shelf = await isar.shelfs.get(match.item.shelfId!);
                         if (shelf != null) {
@@ -214,7 +206,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
     );
   }
 
-  // Открытие формы редактирования вещи (как в каталоге)
   Future<void> _editItem(DetectedItemData detectedItem) async {
     Item item;
     if (detectedItem.matchedIsarItemId != null) {
@@ -280,7 +271,7 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                     const Padding(
                       padding: EdgeInsets.all(8.0),
                       child: Text(
-                        'Распознанные предметы (нажмите для редактирования):',
+                        'Распознанные предметы (отметьте убранные):',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
@@ -333,7 +324,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                                     ],
                                   ),
                                   const Divider(height: 8),
-                                  // Интерактивный блок выбора связи с существующей вещью из базы
                                   InkWell(
                                     onTap: () => _showMatchSelectionDialog(itemData),
                                     child: Container(
@@ -383,20 +373,32 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
       bottomNavigationBar: (_activeSession == null || _activeSession!.items.isEmpty)
           ? null
           : Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16, 
+                16, 
+                16, 
+                16 + MediaQuery.of(context).padding.bottom,
+              ),
               color: Colors.white,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 onPressed: () async {
-                  final selectedItems = _activeSession!.items.where((e) => e.isSelected).toList();
-                  if (selectedItems.isEmpty) return;
+                  // Выбираем только те вещи, которые отмечены чекбоксом (убранные)
+                  final checkedItems = _activeSession!.items.where((e) => e.isSelected).toList();
+                  if (checkedItems.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Отметьте галочками вещи, которые вы убрали')),
+                    );
+                    return;
+                  }
 
                   await isar.writeTxn(() async {
-                    for (var itemData in selectedItems) {
+                    // 1. Сохраняем/обновляем убранные вещи в базе
+                    for (var itemData in checkedItems) {
                       if (itemData.matchedIsarItemId != null) {
                         final matched = await isar.items.get(itemData.matchedIsarItemId!);
                         if (matched != null) {
@@ -414,18 +416,35 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                         await isar.items.put(newItem);
                       }
                     }
-                    await isar.roomCleanupSessions.delete(_activeSession!.id);
+
+                    // 2. Удаляем из списка сессии ТОЛЬКО убранные (отмеченные) вещи
+                    _activeSession!.items.removeWhere((item) => item.isSelected);
+
+                    // 3. Проверяем: если в сессии больше не осталось неубранных вещей — полностью удаляем сессию
+                    if (_activeSession!.items.isEmpty) {
+                      await isar.roomCleanupSessions.delete(_activeSession!.id);
+                    } else {
+                      // Иначе сохраняем сессию с оставшимися неубранными вещами
+                      await isar.roomCleanupSessions.put(_activeSession!);
+                    }
                   });
 
                   if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Сохранено предметов в базу: ${selectedItems.length}')),
-                    );
+                    if (_activeSession!.items.isEmpty) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Комната полностью убрана! Сессия завершена.')),
+                      );
+                    } else {
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Убрано предметов: ${checkedItems.length}. Осталось в комнате: ${_activeSession!.items.length}')),
+                      );
+                    }
                   }
                 },
-                icon: const Icon(Icons.save_alt),
-                label: Text('Сохранить выбранное (${_activeSession!.items.where((e) => e.isSelected).length})', style: const TextStyle(fontSize: 16)),
+                icon: const Icon(Icons.check_circle_outline),
+                label: Text('Положить на место (${_activeSession!.items.where((e) => e.isSelected).length})', style: const TextStyle(fontSize: 16)),
               ),
             ),
     );
