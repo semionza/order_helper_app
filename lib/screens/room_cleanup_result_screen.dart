@@ -8,11 +8,13 @@ import '../models/storage_unit.dart';
 import '../models/room.dart';
 import '../models/room_cleanup_session.dart';
 import '../services/gemini_service.dart';
+import '../widgets/edit_item_form_dialog.dart';
 
 class RoomCleanupResultScreen extends StatefulWidget {
-  final String? photoPath; // Может быть null, если открываем последнюю сохраненную сессию
+  final String? photoPath;
+  final int? sessionId; // ID сессии, если открываем из истории
 
-  const RoomCleanupResultScreen({super.key, this.photoPath});
+  const RoomCleanupResultScreen({super.key, this.photoPath, this.sessionId});
 
   @override
   State<RoomCleanupResultScreen> createState() => _RoomCleanupResultScreenState();
@@ -29,22 +31,17 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
   }
 
   Future<void> _loadOrAnalyzeSession() async {
-    // 1. Проверяем, есть ли уже сохраненная сессия в базе
-    final existingSession = await isar.roomCleanupSessions.where().sortByCreatedAtDesc().findFirst();
+    RoomCleanupSession? session;
 
-    if (widget.photoPath == null && existingSession != null) {
-      // Если фото не передано явно, но есть сохраненная сессия — загружаем её
-      setState(() {
-        _activeSession = existingSession;
-        _isLoading = false;
-      });
-      return;
-    }
-
-    // 2. Если передано новое фото, выполняем анализ через Gemini
-    if (widget.photoPath != null) {
+    if (widget.sessionId != null) {
+      // Открываем конкретную сессию из истории
+      session = await isar.roomCleanupSessions.get(widget.sessionId!);
+    } else if (widget.photoPath == null) {
+      // Открываем последнюю актуальную сессию
+      session = await isar.roomCleanupSessions.where().sortByCreatedAtDesc().findFirst();
+    } else {
+      // Создаем новую сессию по новому фото
       final results = await GeminiService.analyzeRoomCleanupPhoto(widget.photoPath!);
-
       final List<DetectedItemData> detectedList = [];
 
       for (var itemMap in results) {
@@ -52,7 +49,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
         final quantity = itemMap['quantity'] ?? 1;
         final List<String> tags = List<String>.from(itemMap['tags'] ?? []);
 
-        // Сверяем с Isar
         final existingItem = await isar.items
             .filter()
             .nameContains(itemName, caseSensitive: false)
@@ -73,7 +69,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
             }
           }
         } else {
-          // Ищем рекомендации по тегам
           for (var dbItem in await isar.items.where().findAll()) {
             if (dbItem.shelfId != null && dbItem.tags.any((t) => tags.contains(t))) {
               final shelf = await isar.shelfs.get(dbItem.shelfId!);
@@ -104,85 +99,55 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
         detectedList.add(data);
       }
 
-      // Сохраняем новую сессию в Isar
-      final newSession = RoomCleanupSession()
+      session = RoomCleanupSession()
         ..photoPath = widget.photoPath!
         ..createdAt = DateTime.now()
         ..items = detectedList;
 
       await isar.writeTxn(() async {
-        // Очищаем старые сессии, оставляем только последнюю
-        await isar.roomCleanupSessions.clear();
-        await isar.roomCleanupSessions.put(newSession);
-      });
-
-      setState(() {
-        _activeSession = newSession;
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
+        await isar.roomCleanupSessions.put(session!);
       });
     }
+
+    setState(() {
+      _activeSession = session;
+      _isLoading = false;
+    });
   }
 
-  // Диалог редактирования конкретного распознанного предмета
-  void _editDetectedItem(int index) {
-    if (_activeSession == null) return;
-    final itemData = _activeSession!.items[index];
+  // Открытие формы редактирования вещи (как в каталоге)
+  Future<void> _editItem(DetectedItemData detectedItem) async {
+    // Находим реальный Item в базе или создаем временный объект для формы
+    Item item;
+    if (detectedItem.matchedIsarItemId != null) {
+      item = (await isar.items.get(detectedItem.matchedIsarItemId!)) ?? Item();
+    } else {
+      item = Item()
+        ..name = detectedItem.name
+        ..quantity = detectedItem.quantity
+        ..tags = detectedItem.tags
+        ..photoPath = _activeSession?.photoPath
+        ..shelfId = null;
+    }
 
-    final nameController = TextEditingController(text: itemData.name);
-    final qtyController = TextEditingController(text: itemData.quantity.toString());
-    final tagsController = TextEditingController(text: itemData.tags.join(', '));
+    if (!context.mounted) return;
 
-    showDialog(
+    await showEditItemFormDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Редактировать предмет'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Название'),
-              ),
-              TextField(
-                controller: qtyController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Количество'),
-              ),
-              TextField(
-                controller: tagsController,
-                decoration: const InputDecoration(labelText: 'Теги (через запятую)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                setState(() {
-                  itemData.name = nameController.text.trim();
-                  itemData.quantity = int.tryParse(qtyController.text) ?? 1;
-                  itemData.tags = tagsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-                });
-
-                // Сохраняем изменения в базу сессий
-                await isar.writeTxn(() async {
-                  await isar.roomCleanupSessions.put(_activeSession!);
-                });
-
-                if (context.mounted) Navigator.pop(context);
-              },
-              child: const Text('Сохранить'),
-            ),
-          ],
-        );
+      item: item,
+      onSaved: () async {
+        // Синхронизируем изменения обратно в сессию
+        setState(() {
+          detectedItem.name = item.name;
+          detectedItem.quantity = item.quantity;
+          detectedItem.tags = item.tags;
+          detectedItem.matchedIsarItemId = item.id;
+        });
+        if (_activeSession != null) {
+          await isar.writeTxn(() async {
+            await isar.roomCleanupSessions.put(_activeSession!);
+          });
+        }
       },
     );
   }
@@ -193,36 +158,17 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
       appBar: AppBar(
         title: const Text('Результаты уборки комнаты'),
         actions: [
-          if (_activeSession != null && _activeSession!.items.isNotEmpty)
+          if (_activeSession != null)
             IconButton(
               icon: const Icon(Icons.delete_sweep, color: Colors.red),
               tooltip: 'Стереть результаты анализа',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Стереть результаты?'),
-                    content: const Text('Сохраненный анализ неубранной комнаты будет удален.'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                        onPressed: () async {
-                          await isar.writeTxn(() async {
-                            await isar.roomCleanupSessions.clear();
-                          });
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            setState(() {
-                              _activeSession = null;
-                            });
-                          }
-                        },
-                        child: const Text('Стереть'),
-                      ),
-                    ],
-                  ),
-                );
+              onPressed: () async {
+                await isar.writeTxn(() async {
+                  await isar.roomCleanupSessions.delete(_activeSession!.id);
+                });
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
               },
             ),
         ],
@@ -230,13 +176,7 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : (_activeSession == null || _activeSession!.items.isEmpty)
-              ? const Center(
-                  child: Text(
-                    'Нет сохраненных результатов уборки.\nСделайте фото комнаты с главного экрана.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                )
+              ? const Center(child: Text('Нет данных анализа.'))
               : Column(
                   children: [
                     SizedBox(
@@ -247,7 +187,7 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                     const Padding(
                       padding: EdgeInsets.all(8.0),
                       child: Text(
-                        'Разбросанные предметы (нажмите для редактирования):',
+                        'Распознанные предметы (нажмите для редактирования):',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
@@ -261,7 +201,7 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                             child: InkWell(
-                              onTap: () => _editDetectedItem(index), // Открывает форму редактирования предмета
+                              onTap: () => _editItem(itemData), // Открывает полную форму редактирования
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Row(
@@ -340,19 +280,19 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                           ..quantity = itemData.quantity
                           ..tags = itemData.tags
                           ..photoPath = _activeSession!.photoPath
-                          ..shelfId = null; // Без места
+                          ..shelfId = null;
 
                         await isar.items.put(newItem);
                       }
                     }
-                    // Удаляем сессию после сохранения в базу вещей
-                    await isar.roomCleanupSessions.clear();
+                    // Удаляем текущую сессию из архива после успешного сохранения вещей
+                    await isar.roomCleanupSessions.delete(_activeSession!.id);
                   });
 
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Успешно сохранено предметов: ${selectedItems.length}')),
+                      SnackBar(content: Text('Сохранено предметов в базу: ${selectedItems.length}')),
                     );
                   }
                 },

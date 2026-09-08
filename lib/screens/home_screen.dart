@@ -3,6 +3,7 @@ import 'rooms_screen.dart';
 import 'cleanup_screen.dart';
 import 'search_screen.dart';
 import 'room_cleanup_result_screen.dart';
+import 'cleanup_history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -66,6 +67,21 @@ class HomeScreen extends StatelessWidget {
                     ),
                   );
                 }
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.history, color: Colors.orange, size: 32),
+              title: const Text('История уборок', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              subtitle: const Text('Предыдущие результаты анализа беспорядка'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CleanupHistoryScreen()),
+                );
               },
             ),
           ),
