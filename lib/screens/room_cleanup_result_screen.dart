@@ -284,25 +284,104 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
 
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Checkbox(
-                                        value: itemData.isSelected,
-                                        onChanged: (val) async {
-                                          setState(() {
-                                            itemData.isSelected = val ?? true;
-                                          });
-                                          await _saveSessionState();
-                                        },
+                            child: InkWell(
+                              onTap: () => _editItem(itemData),
+                              // Долгое нажатие открывает контекстное меню быстрых действий
+                              onLongPress: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    return SafeArea(
+                                      child: Wrap(
+                                        children: [
+                                          ListTile(
+                                            leading: const Icon(Icons.check_circle, color: Colors.green),
+                                            title: const Text('Положить на место'),
+                                            subtitle: const Text('Сохранить вещь в базу и убрать из списка'),
+                                            onTap: () async {
+                                              Navigator.pop(context);
+                                              
+                                              // Сохраняем вещь в базу (логика аналогична кнопке "Положить на место")
+                                              await isar.writeTxn(() async {
+                                                if (itemData.matchedIsarItemId != null) {
+                                                  final matched = await isar.items.get(itemData.matchedIsarItemId!);
+                                                  if (matched != null) {
+                                                    matched.photoPath = _activeSession!.photoPath;
+                                                    await isar.items.put(matched);
+                                                  }
+                                                } else {
+                                                  final newItem = Item()
+                                                    ..name = itemData.name
+                                                    ..quantity = itemData.quantity
+                                                    ..tags = itemData.tags
+                                                    ..photoPath = _activeSession!.photoPath
+                                                    ..shelfId = null;
+                                                  await isar.items.put(newItem);
+                                               }
+
+                                                // Удаляем конкретный элемент из сессии
+                                                _activeSession!.items.remove(itemData);
+
+                                                if (_activeSession!.items.isEmpty) {
+                                                  await isar.roomCleanupSessions.delete(_activeSession!.id);
+                                                } else {
+                                                  await isar.roomCleanupSessions.put(_activeSession!);
+                                                }
+                                              });
+
+                                              setState(() {});
+                                              if (_activeSession!.items.isEmpty && context.mounted) {
+                                                Navigator.pop(context);
+                                              }
+                                            },
+                                          ),
+                                          ListTile(
+                                            leading: const Icon(Icons.delete, color: Colors.red),
+                                            title: const Text('Удалить'),
+                                            subtitle: const Text('Стереть и удалить из списка'),
+                                            onTap: () async {
+                                              Navigator.pop(context);
+
+                                              // Удаляем только из списка сессии (без сохранения в базу)
+                                              await isar.writeTxn(() async {
+                                                _activeSession!.items.remove(itemData);
+
+                                                if (_activeSession!.items.isEmpty) {
+                                                  await isar.roomCleanupSessions.delete(_activeSession!.id);
+                                                } else {
+                                                  await isar.roomCleanupSessions.put(_activeSession!);
+                                                }
+                                              });
+
+                                              setState(() {});
+                                              if (_activeSession!.items.isEmpty && context.mounted) {
+                                                Navigator.pop(context);
+                                              }
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      Expanded(
-                                        child: InkWell(
-                                          onTap: () => _editItem(itemData),
+                                    );
+                                  },
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Checkbox(
+                                          value: itemData.isSelected,
+                                          onChanged: (val) async {
+                                            setState(() {
+                                              itemData.isSelected = val ?? true;
+                                            });
+                                            await _saveSessionState();
+                                          },
+                                        ),
+                                        Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
@@ -315,53 +394,53 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                                             ],
                                           ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
-                                        onPressed: () => _editItem(itemData),
-                                        tooltip: 'Редактировать вещь',
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(height: 8),
-                                  InkWell(
-                                    onTap: () => _showMatchSelectionDialog(itemData),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: itemData.matchedIsarItemId != null ? Colors.green.shade50 : Colors.orange.shade50,
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: itemData.matchedIsarItemId != null ? Colors.green.shade200 : Colors.orange.shade200,
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                                          onPressed: () => _editItem(itemData),
+                                          tooltip: 'Редактировать вещь',
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(height: 8),
+                                    InkWell(
+                                      onTap: () => _showMatchSelectionDialog(itemData),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: itemData.matchedIsarItemId != null ? Colors.green.shade50 : Colors.orange.shade50,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: itemData.matchedIsarItemId != null ? Colors.green.shade200 : Colors.orange.shade200,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              itemData.matchedIsarItemId != null ? Icons.link : Icons.help_outline,
+                                              size: 16,
+                                              color: itemData.matchedIsarItemId != null ? Colors.green : Colors.orange,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                itemData.matchedIsarItemId != null && itemData.locationPath != null
+                                                    ? '🟢 В базе (${itemData.matchConfidence}%): ${itemData.locationPath}'
+                                                    : '🟡 Новый предмет (нажмите для выбора связи)',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: itemData.matchedIsarItemId != null ? Colors.green.shade800 : Colors.orange.shade800,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const Icon(Icons.arrow_drop_down, size: 18, color: Colors.grey),
+                                          ],
                                         ),
                                       ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            itemData.matchedIsarItemId != null ? Icons.link : Icons.help_outline,
-                                            size: 16,
-                                            color: itemData.matchedIsarItemId != null ? Colors.green : Colors.orange,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              itemData.matchedIsarItemId != null && itemData.locationPath != null
-                                                  ? '🟢 В базе (${itemData.matchConfidence}%): ${itemData.locationPath}'
-                                                  : '🟡 Новый предмет (нажмите для выбора связи)',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: itemData.matchedIsarItemId != null ? Colors.green.shade800 : Colors.orange.shade800,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const Icon(Icons.arrow_drop_down, size: 18, color: Colors.grey),
-                                        ],
-                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           );
