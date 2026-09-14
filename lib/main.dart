@@ -17,6 +17,7 @@ late Isar isar;
 void main() async {
   // Гарантируем инициализацию виджетов Flutter перед вызовом нативных модулей
   WidgetsFlutterBinding.ensureInitialized();
+  await loadSavedAppLocale();
 
   // Получаем системную директорию для хранения базы данных
   final dir = await getApplicationDocumentsDirectory();

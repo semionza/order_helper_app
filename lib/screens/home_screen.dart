@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
           PopupMenuButton<Locale>(
             icon: const Icon(Icons.language),
             tooltip: l10n.changeLanguage,
-            onSelected: (locale) => appLocale.value = locale,
+            onSelected: setAppLocale,
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: const Locale('en'),
