@@ -172,6 +172,36 @@ abstract class AppLocalizations {
   /// **'Edit item'**
   String get editItem;
 
+  /// No description provided for @deleteItemPermanently.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get deleteItemPermanently;
+
+  /// No description provided for @deleteItemPermanentlyQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete item permanently?'**
+  String get deleteItemPermanentlyQuestion;
+
+  /// No description provided for @deleteItemPermanentlyWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This item and all of its data will be permanently deleted from the database.'**
+  String get deleteItemPermanentlyWarning;
+
+  /// No description provided for @removeItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeItem;
+
+  /// No description provided for @removeItemFromShelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this item from the shelf? It will remain in the catalog without a location.'**
+  String get removeItemFromShelf;
+
   /// No description provided for @newItem.
   ///
   /// In en, this message translates to:
@@ -309,6 +339,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There are no rooms yet.\nTap + to add the first one.'**
   String get roomsEmpty;
+
+  /// No description provided for @editRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit room'**
+  String get editRoom;
+
+  /// No description provided for @deleteRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete room'**
+  String get deleteRoom;
+
+  /// No description provided for @deleteRoomQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete room?'**
+  String get deleteRoomQuestion;
+
+  /// No description provided for @deleteRoomWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The room and all its furniture will be deleted. Items will remain in the catalog without a storage location.'**
+  String get deleteRoomWarning;
 
   /// No description provided for @furnitureInRoom.
   ///

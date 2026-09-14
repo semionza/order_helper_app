@@ -46,6 +46,23 @@ class AppLocalizationsHe extends AppLocalizations {
   String get editItem => 'עריכת פריט';
 
   @override
+  String get deleteItemPermanently => 'מחיקה לצמיתות';
+
+  @override
+  String get deleteItemPermanentlyQuestion => 'למחוק את הפריט לצמיתות?';
+
+  @override
+  String get deleteItemPermanentlyWarning =>
+      'הפריט וכל הנתונים שלו יימחקו לצמיתות ממסד הנתונים.';
+
+  @override
+  String get removeItem => 'הסרה';
+
+  @override
+  String get removeItemFromShelf =>
+      'להסיר את הפריט מהמדף? הוא יישאר בקטלוג ללא מיקום.';
+
+  @override
   String get newItem => 'פריט חדש';
 
   @override
@@ -117,6 +134,19 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get roomsEmpty => 'עדיין אין חדרים.\nהקישו על + כדי להוסיף את הראשון.';
+
+  @override
+  String get editRoom => 'עריכת חדר';
+
+  @override
+  String get deleteRoom => 'מחיקת חדר';
+
+  @override
+  String get deleteRoomQuestion => 'למחוק את החדר?';
+
+  @override
+  String get deleteRoomWarning =>
+      'החדר וכל יחידות האחסון שבו יימחקו. הפריטים יישארו בקטלוג ללא מיקום אחסון.';
 
   @override
   String furnitureInRoom(String roomName) {

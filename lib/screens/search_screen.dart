@@ -1,7 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+
 import '../main.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/locale_utils.dart';
@@ -33,9 +35,13 @@ class _SearchScreenState extends State<SearchScreen> {
     final l10n = AppLocalizations.of(context);
     final activeLocaleId = speechLocaleIdFor(context);
     final nameController = TextEditingController(text: itemToEdit.name);
-    final quantityController = TextEditingController(text: itemToEdit.quantity.toString());
-    final tagsController = TextEditingController(text: itemToEdit.tags.join(', '));
-    
+    final quantityController = TextEditingController(
+      text: itemToEdit.quantity.toString(),
+    );
+    final tagsController = TextEditingController(
+      text: itemToEdit.tags.join(', '),
+    );
+
     String? itemPhotoPath = itemToEdit.photoPath;
     int? selectedShelfId = itemToEdit.shelfId;
 
@@ -53,7 +59,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 if (available) {
                   setDialogState(() => isListening = true);
                   speech.listen(
-                    listenOptions: stt.SpeechListenOptions(localeId: activeLocaleId),
+                    listenOptions: stt.SpeechListenOptions(
+                      localeId: activeLocaleId,
+                    ),
                     onResult: (val) {
                       setDialogState(() {
                         nameController.text = val.recognizedWords;
@@ -79,12 +87,17 @@ class _SearchScreenState extends State<SearchScreen> {
                         Expanded(
                           child: TextField(
                             controller: nameController,
-                            decoration: InputDecoration(labelText: l10n.itemNameLabel),
+                            decoration: InputDecoration(
+                              labelText: l10n.itemNameLabel,
+                            ),
                             autofocus: true,
                           ),
                         ),
                         IconButton(
-                          icon: Icon(isListening ? Icons.mic : Icons.mic_none, color: isListening ? Colors.red : Colors.blue),
+                          icon: Icon(
+                            isListening ? Icons.mic : Icons.mic_none,
+                            color: isListening ? Colors.red : Colors.blue,
+                          ),
                           onPressed: listen,
                         ),
                       ],
@@ -92,22 +105,35 @@ class _SearchScreenState extends State<SearchScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: quantityController,
-                      decoration: InputDecoration(labelText: l10n.quantityLabel),
+                      decoration: InputDecoration(
+                        labelText: l10n.quantityLabel,
+                      ),
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: tagsController,
-                      decoration: InputDecoration(labelText: l10n.tagsLabel, hintText: l10n.tagsHint),
+                      decoration: InputDecoration(
+                        labelText: l10n.tagsLabel,
+                        hintText: l10n.tagsHint,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    Text(l10n.storageLocationLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(
+                      l10n.storageLocationLabel,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     FutureBuilder<List<ShelfInfoDropdown>>(
                       future: _loadAllShelvesForDropdown(),
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const LinearProgressIndicator();
-                        
+                        if (!snapshot.hasData) {
+                          return const LinearProgressIndicator();
+                        }
+
                         final shelvesList = snapshot.data!;
 
                         return DropdownButtonFormField<int?>(
@@ -115,17 +141,28 @@ class _SearchScreenState extends State<SearchScreen> {
                           isExpanded: true,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                           ),
                           items: [
                             DropdownMenuItem<int?>(
                               value: null,
-                              child: Text(l10n.unassignedShelf, style: const TextStyle(color: Colors.grey)),
+                              child: Text(
+                                l10n.unassignedShelf,
+                                style: const TextStyle(color: Colors.grey),
+                              ),
                             ),
-                            ...shelvesList.map((s) => DropdownMenuItem<int?>(
-                              value: s.shelfId,
-                              child: Text(s.fullName, overflow: TextOverflow.ellipsis),
-                            )),
+                            ...shelvesList.map(
+                              (s) => DropdownMenuItem<int?>(
+                                value: s.shelfId,
+                                child: Text(
+                                  s.fullName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
                           ],
                           onChanged: (val) {
                             setDialogState(() {
@@ -142,7 +179,9 @@ class _SearchScreenState extends State<SearchScreen> {
                           onPressed: () async {
                             final photoPath = await Navigator.push<String>(
                               context,
-                              MaterialPageRoute(builder: (context) => const CleanupScreen()),
+                              MaterialPageRoute(
+                                builder: (context) => const CleanupScreen(),
+                              ),
                             );
                             if (photoPath != null) {
                               setDialogState(() {
@@ -181,10 +220,15 @@ class _SearchScreenState extends State<SearchScreen> {
                   onPressed: () async {
                     speech.stop();
                     final name = nameController.text.trim();
-                    final quantity = int.tryParse(quantityController.text.trim()) ?? 1;
+                    final quantity =
+                        int.tryParse(quantityController.text.trim()) ?? 1;
                     final tagsRaw = tagsController.text.trim();
                     final tags = tagsRaw.isNotEmpty
-                        ? tagsRaw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
+                        ? tagsRaw
+                              .split(',')
+                              .map((e) => e.trim())
+                              .where((e) => e.isNotEmpty)
+                              .toList()
                         : <String>[];
 
                     if (name.isNotEmpty) {
@@ -222,12 +266,82 @@ class _SearchScreenState extends State<SearchScreen> {
       final roomName = room?.name ?? l10n.fallbackRoom;
       final unitName = unit?.name ?? l10n.fallbackStorageUnit;
 
-      result.add(ShelfInfoDropdown(
-        shelfId: shelf.id,
-        fullName: '$roomName ➔ $unitName ➔ ${shelf.name}',
-      ));
+      result.add(
+        ShelfInfoDropdown(
+          shelfId: shelf.id,
+          fullName: '$roomName ➔ $unitName ➔ ${shelf.name}',
+        ),
+      );
     }
     return result;
+  }
+
+  void _showItemActionsDialog(BuildContext context, Item item) {
+    final l10n = AppLocalizations.of(context);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(item.name),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l10n.editItem),
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _showEditItemDialog(context, item);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete_forever_outlined,
+                color: Colors.red,
+              ),
+              title: Text(l10n.deleteItemPermanently),
+              textColor: Colors.red,
+              iconColor: Colors.red,
+              onTap: () async {
+                Navigator.pop(dialogContext);
+                await _confirmPermanentDelete(context, item);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmPermanentDelete(BuildContext context, Item item) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteItemPermanentlyQuestion),
+        content: Text(l10n.deleteItemPermanentlyWarning),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.deleteItemPermanently),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await isar.writeTxn(() async {
+      await isar.items.delete(item.id);
+    });
   }
 
   @override
@@ -264,14 +378,17 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
       body: _searchQuery.isEmpty
-              ? Center(
+          ? Center(
               child: Text(
                 l10n.searchPrompt,
                 style: const TextStyle(color: Colors.grey, fontSize: 16),
               ),
             )
           : StreamBuilder<List<Item>>(
-              stream: isar.items.filter().nameContains(_searchQuery, caseSensitive: false).watch(fireImmediately: true),
+              stream: isar.items
+                  .filter()
+                  .nameContains(_searchQuery, caseSensitive: false)
+                  .watch(fireImmediately: true),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -296,13 +413,20 @@ class _SearchScreenState extends State<SearchScreen> {
                     return FutureBuilder<Map<String, String>>(
                       future: _resolveItemLocation(item.shelfId),
                       builder: (context, locationSnapshot) {
-                        final location = locationSnapshot.data ?? {'room': '...', 'unit': '...', 'shelf': '...'};
+                        final location =
+                            locationSnapshot.data ??
+                            {'room': '...', 'unit': '...', 'shelf': '...'};
 
                         return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
                           child: InkWell(
                             // Клик по всей карточке сразу открывает редактирование вещи
                             onTap: () => _showEditItemDialog(context, item),
+                            onLongPress: () =>
+                                _showItemActionsDialog(context, item),
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: ListTile(
@@ -319,9 +443,17 @@ class _SearchScreenState extends State<SearchScreen> {
                                       )
                                     : const CircleAvatar(
                                         backgroundColor: Colors.blueAccent,
-                                        child: Icon(Icons.inventory_2, color: Colors.white),
+                                        child: Icon(
+                                          Icons.inventory_2,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                title: Text(
+                                  item.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -330,7 +462,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                     const SizedBox(height: 2),
                                     Text(
                                       '📍 ${location['room']} ➔ ${location['unit']} ➔ ${location['shelf']}',
-                                      style: const TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.w500, fontSize: 12),
+                                      style: const TextStyle(
+                                        color: Colors.blueGrey,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -351,17 +487,23 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<Map<String, String>> _resolveItemLocation(int? shelfId) async {
     if (shelfId == null) {
       final l10n = AppLocalizations.of(context);
-      return {'room': l10n.unassignedLocation, 'unit': l10n.notLinkedLocation, 'shelf': '—'};
+      return {
+        'room': l10n.unassignedLocation,
+        'unit': l10n.notLinkedLocation,
+        'shelf': '—',
+      };
     }
 
     final shelf = await isar.shelfs.get(shelfId);
     if (shelf == null) return {'room': '?', 'unit': '?', 'shelf': '?'};
 
     final storageUnit = await isar.storageUnits.get(shelf.storageUnitId);
-    if (storageUnit == null) return {'room': '?', 'unit': '?', 'shelf': shelf.name};
+    if (storageUnit == null) {
+      return {'room': '?', 'unit': '?', 'shelf': shelf.name};
+    }
 
     final room = await isar.rooms.get(storageUnit.roomId);
-    
+
     return {
       'room': room?.name ?? '?',
       'unit': storageUnit.name,

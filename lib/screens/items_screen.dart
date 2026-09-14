@@ -1,7 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+
 import '../main.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/locale_utils.dart';
@@ -26,11 +28,17 @@ class _ItemsScreenState extends State<ItemsScreen> {
     final isEditing = itemToEdit != null;
     final l10n = AppLocalizations.of(context);
     int speechLocaleIndex = speechLocaleIndexFor(context);
-    
-    final nameController = TextEditingController(text: isEditing ? itemToEdit.name : '');
-    final quantityController = TextEditingController(text: isEditing ? itemToEdit.quantity.toString() : '1');
-    final tagsController = TextEditingController(text: isEditing ? itemToEdit.tags.join(', ') : '');
-    
+
+    final nameController = TextEditingController(
+      text: isEditing ? itemToEdit.name : '',
+    );
+    final quantityController = TextEditingController(
+      text: isEditing ? itemToEdit.quantity.toString() : '1',
+    );
+    final tagsController = TextEditingController(
+      text: isEditing ? itemToEdit.tags.join(', ') : '',
+    );
+
     String? itemPhotoPath = isEditing ? itemToEdit.photoPath : null;
     int? selectedShelfId = isEditing ? itemToEdit.shelfId : widget.shelf.id;
 
@@ -47,12 +55,17 @@ class _ItemsScreenState extends State<ItemsScreen> {
                 bool available = await speech.initialize();
                 if (available) {
                   setDialogState(() => isListening = true);
-                  
-                  final activeLocaleId = speechLocaleOptions[speechLocaleIndex].localeId;
-                  debugPrint('DEBUG: Запуск голосового ввода с локалью -> $activeLocaleId');
+
+                  final activeLocaleId =
+                      speechLocaleOptions[speechLocaleIndex].localeId;
+                  debugPrint(
+                    'DEBUG: Запуск голосового ввода с локалью -> $activeLocaleId',
+                  );
 
                   speech.listen(
-                    listenOptions: stt.SpeechListenOptions(localeId: activeLocaleId),
+                    listenOptions: stt.SpeechListenOptions(
+                      localeId: activeLocaleId,
+                    ),
                     onResult: (val) {
                       setDialogState(() {
                         nameController.text = val.recognizedWords;
@@ -79,7 +92,9 @@ class _ItemsScreenState extends State<ItemsScreen> {
                         Expanded(
                           child: TextField(
                             controller: nameController,
-                            decoration: InputDecoration(labelText: l10n.itemNameLabel),
+                            decoration: InputDecoration(
+                              labelText: l10n.itemNameLabel,
+                            ),
                             autofocus: true,
                           ),
                         ),
@@ -91,12 +106,17 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             }
                             setDialogState(() {
                               isListening = false;
-                              speechLocaleIndex = (speechLocaleIndex + 1) % speechLocaleOptions.length;
+                              speechLocaleIndex =
+                                  (speechLocaleIndex + 1) %
+                                  speechLocaleOptions.length;
                             });
                           },
                           borderRadius: BorderRadius.circular(4),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.blue),
                               borderRadius: BorderRadius.circular(4),
@@ -104,12 +124,19 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             ),
                             child: Text(
                               speechLocaleOptions[speechLocaleIndex].label,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: Colors.blue,
+                              ),
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: Icon(isListening ? Icons.mic : Icons.mic_none, color: isListening ? Colors.red : Colors.blue),
+                          icon: Icon(
+                            isListening ? Icons.mic : Icons.mic_none,
+                            color: isListening ? Colors.red : Colors.blue,
+                          ),
                           onPressed: listen,
                         ),
                       ],
@@ -117,24 +144,37 @@ class _ItemsScreenState extends State<ItemsScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: quantityController,
-                      decoration: InputDecoration(labelText: l10n.quantityLabel),
+                      decoration: InputDecoration(
+                        labelText: l10n.quantityLabel,
+                      ),
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: tagsController,
-                      decoration: InputDecoration(labelText: l10n.tagsLabel, hintText: l10n.tagsHint),
+                      decoration: InputDecoration(
+                        labelText: l10n.tagsLabel,
+                        hintText: l10n.tagsHint,
+                      ),
                     ),
                     const SizedBox(height: 16),
 
                     // Выбор местоположения (Полка / Без места)
-                    Text(l10n.storageLocationLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(
+                      l10n.storageLocationLabel,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     FutureBuilder<List<ShelfInfoDropdown>>(
                       future: _loadAllShelvesForDropdown(),
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const LinearProgressIndicator();
-                        
+                        if (!snapshot.hasData) {
+                          return const LinearProgressIndicator();
+                        }
+
                         final shelvesList = snapshot.data!;
 
                         return DropdownButtonFormField<int?>(
@@ -142,17 +182,28 @@ class _ItemsScreenState extends State<ItemsScreen> {
                           isExpanded: true,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                           ),
                           items: [
                             DropdownMenuItem<int?>(
                               value: null,
-                              child: Text(l10n.unassignedShelf, style: const TextStyle(color: Colors.grey)),
+                              child: Text(
+                                l10n.unassignedShelf,
+                                style: const TextStyle(color: Colors.grey),
+                              ),
                             ),
-                            ...shelvesList.map((s) => DropdownMenuItem<int?>(
-                              value: s.shelfId,
-                              child: Text(s.fullName, overflow: TextOverflow.ellipsis),
-                            )),
+                            ...shelvesList.map(
+                              (s) => DropdownMenuItem<int?>(
+                                value: s.shelfId,
+                                child: Text(
+                                  s.fullName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
                           ],
                           onChanged: (val) {
                             setDialogState(() {
@@ -171,7 +222,9 @@ class _ItemsScreenState extends State<ItemsScreen> {
                           onPressed: () async {
                             final photoPath = await Navigator.push<String>(
                               context,
-                              MaterialPageRoute(builder: (context) => const CleanupScreen()),
+                              MaterialPageRoute(
+                                builder: (context) => const CleanupScreen(),
+                              ),
                             );
                             if (photoPath != null) {
                               setDialogState(() {
@@ -210,10 +263,15 @@ class _ItemsScreenState extends State<ItemsScreen> {
                   onPressed: () async {
                     speech.stop();
                     final name = nameController.text.trim();
-                    final quantity = int.tryParse(quantityController.text.trim()) ?? 1;
+                    final quantity =
+                        int.tryParse(quantityController.text.trim()) ?? 1;
                     final tagsRaw = tagsController.text.trim();
                     final tags = tagsRaw.isNotEmpty
-                        ? tagsRaw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
+                        ? tagsRaw
+                              .split(',')
+                              .map((e) => e.trim())
+                              .where((e) => e.isNotEmpty)
+                              .toList()
                         : <String>[];
 
                     if (name.isNotEmpty) {
@@ -262,12 +320,56 @@ class _ItemsScreenState extends State<ItemsScreen> {
       final roomName = room?.name ?? l10n.fallbackRoom;
       final unitName = unit?.name ?? l10n.fallbackStorageUnit;
 
-      result.add(ShelfInfoDropdown(
-        shelfId: shelf.id,
-        fullName: '$roomName ➔ $unitName ➔ ${shelf.name}',
-      ));
+      result.add(
+        ShelfInfoDropdown(
+          shelfId: shelf.id,
+          fullName: '$roomName ➔ $unitName ➔ ${shelf.name}',
+        ),
+      );
     }
     return result;
+  }
+
+  void _showItemActionsDialog(BuildContext context, Item item) {
+    final l10n = AppLocalizations.of(context);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(item.name),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l10n.editItem),
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _showItemDialog(context, itemToEdit: item);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.remove_circle_outline,
+                color: Colors.orange,
+              ),
+              title: Text(l10n.removeItem),
+              onTap: () async {
+                Navigator.pop(dialogContext);
+                await _removeItemFromShelf(item);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _removeItemFromShelf(Item item) async {
+    await isar.writeTxn(() async {
+      item.shelfId = null;
+      await isar.items.put(item);
+    });
   }
 
   @override
@@ -276,7 +378,10 @@ class _ItemsScreenState extends State<ItemsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.itemsOnShelfTitle(widget.shelf.name))),
       body: StreamBuilder<List<Item>>(
-        stream: isar.items.filter().shelfIdEqualTo(widget.shelf.id).watch(fireImmediately: true),
+        stream: isar.items
+            .filter()
+            .shelfIdEqualTo(widget.shelf.id)
+            .watch(fireImmediately: true),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -315,7 +420,10 @@ class _ItemsScreenState extends State<ItemsScreen> {
                           backgroundColor: Colors.blueAccent,
                           child: Icon(Icons.inventory_2, color: Colors.white),
                         ),
-                  title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    item.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -324,26 +432,42 @@ class _ItemsScreenState extends State<ItemsScreen> {
                         const SizedBox(height: 4),
                         Wrap(
                           spacing: 4,
-                          children: item.tags.map((tag) => Chip(
-                            label: Text(tag, style: const TextStyle(fontSize: 10)),
-                            padding: EdgeInsets.zero,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          )).toList(),
+                          children: item.tags
+                              .map(
+                                (tag) => Chip(
+                                  label: Text(
+                                    tag,
+                                    style: const TextStyle(fontSize: 10),
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              )
+                              .toList(),
                         ),
                       ],
                     ],
                   ),
                   isThreeLine: item.tags.isNotEmpty,
+                  onLongPress: () => _showItemActionsDialog(context, item),
                   // Кнопки редактирования и удаления
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                        onPressed: () => _showItemDialog(context, itemToEdit: item),
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          color: Colors.blue,
+                        ),
+                        onPressed: () =>
+                            _showItemDialog(context, itemToEdit: item),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
                         onPressed: () async {
                           await isar.writeTxn(() async {
                             await isar.items.delete(item.id);

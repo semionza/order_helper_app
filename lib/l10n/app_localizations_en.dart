@@ -46,6 +46,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editItem => 'Edit item';
 
   @override
+  String get deleteItemPermanently => 'Delete permanently';
+
+  @override
+  String get deleteItemPermanentlyQuestion => 'Delete item permanently?';
+
+  @override
+  String get deleteItemPermanentlyWarning =>
+      'This item and all of its data will be permanently deleted from the database.';
+
+  @override
+  String get removeItem => 'Remove';
+
+  @override
+  String get removeItemFromShelf =>
+      'Remove this item from the shelf? It will remain in the catalog without a location.';
+
+  @override
   String get newItem => 'New item';
 
   @override
@@ -119,6 +136,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get roomsEmpty =>
       'There are no rooms yet.\nTap + to add the first one.';
+
+  @override
+  String get editRoom => 'Edit room';
+
+  @override
+  String get deleteRoom => 'Delete room';
+
+  @override
+  String get deleteRoomQuestion => 'Delete room?';
+
+  @override
+  String get deleteRoomWarning =>
+      'The room and all its furniture will be deleted. Items will remain in the catalog without a storage location.';
 
   @override
   String furnitureInRoom(String roomName) {

@@ -46,6 +46,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get editItem => 'Редактировать вещь';
 
   @override
+  String get deleteItemPermanently => 'Удалить навсегда';
+
+  @override
+  String get deleteItemPermanentlyQuestion => 'Удалить предмет навсегда?';
+
+  @override
+  String get deleteItemPermanentlyWarning =>
+      'Этот предмет и все его данные будут безвозвратно удалены из базы данных.';
+
+  @override
+  String get removeItem => 'Убрать';
+
+  @override
+  String get removeItemFromShelf =>
+      'Убрать предмет с полки? Он останется в каталоге без места хранения.';
+
+  @override
   String get newItem => 'Новая вещь';
 
   @override
@@ -120,6 +137,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get roomsEmpty =>
       'Список комнат пуст.\nНажмите +, чтобы добавить первую.';
+
+  @override
+  String get editRoom => 'Редактировать комнату';
+
+  @override
+  String get deleteRoom => 'Удалить комнату';
+
+  @override
+  String get deleteRoomQuestion => 'Удалить комнату?';
+
+  @override
+  String get deleteRoomWarning =>
+      'Комната и вся мебель в ней будут удалены. Вещи останутся в каталоге без места хранения.';
 
   @override
   String furnitureInRoom(String roomName) {
