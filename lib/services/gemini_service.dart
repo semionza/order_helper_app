@@ -8,7 +8,10 @@ class GeminiService {
   // Используем актуальную модель и ключ из файла конфигурации
   static const String _model = 'gemini-3.6-flash';
 
-  static Future<List<Map<String, dynamic>>> analyzeShelfPhoto(String imagePath) async {
+  static Future<List<Map<String, dynamic>>> analyzeShelfPhoto(
+    String imagePath, {
+    required String languageCode,
+  }) async {
     if (Config.geminiApiKey == 'YOUR_GEMINI_API_KEY' || Config.geminiApiKey.isEmpty) {
       debugPrint('Gemini API Key не настроен в lib/config.dart!');
       return [];
@@ -21,18 +24,19 @@ class GeminiService {
 
       final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent?key=${Config.geminiApiKey}');
 
+      final outputLanguage = _languageName(languageCode);
       final prompt = '''
-      Проанализируй эту фотографию полки или места хранения в доме.
-      Верни строго JSON-массив объектов без какого-либо дополнительного текста, markdown-разметки или префиксов.
-      Каждый объект должен содержать следующие поля:
-      - "name": строка (название найденного предмета на русском языке)
-      - "quantity": число (оценка количества, по умолчанию 1)
-      - "tags": массив строк (от 1 до 3 категорий или тегов на русском, например: ["одежда", "зима"])
-      
-      Пример ответа:
+      Analyze this photo of a shelf or household storage area.
+      Return only a JSON array of objects, without extra text, Markdown, or prefixes.
+      Write all item names and tags in $outputLanguage.
+      Each object must contain:
+      - "name": string
+      - "quantity": number (estimated quantity, default 1)
+      - "tags": array of 1 to 3 category strings
+
+      Example structure:
       [
-        {"name": "Книга по программированию", "quantity": 1, "tags": ["книги", "учеба"]},
-        {"name": "Синяя кружка", "quantity": 2, "tags": ["посуда", "кухня"]}
+        {"name": "localized item name", "quantity": 1, "tags": ["localized tag"]}
       ]
       ''';
 
@@ -85,7 +89,10 @@ class GeminiService {
   }
 
   // Анализ общей фотографии комнаты (поиск разбросанных вещей)
-  static Future<List<Map<String, dynamic>>> analyzeRoomCleanupPhoto(String imagePath) async {
+  static Future<List<Map<String, dynamic>>> analyzeRoomCleanupPhoto(
+    String imagePath, {
+    required String languageCode,
+  }) async {
     if (Config.geminiApiKey == 'YOUR_GEMINI_API_KEY' || Config.geminiApiKey.isEmpty) {
       debugPrint('Gemini API Key не настроен в lib/config.dart!');
       return [];
@@ -98,19 +105,20 @@ class GeminiService {
 
       final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent?key=${Config.geminiApiKey}');
 
+      final outputLanguage = _languageName(languageCode);
       final prompt = '''
-      Проанализируй эту фотографию комнаты, на которой видны разбросанные вещи или беспорядок.
-      Выдели предметы, которые находятся не на своих местах или требуют уборки/организации.
-      Верни строго JSON-массив объектов без какого-либо дополнительного текста, markdown-разметки или префиксов.
-      Каждый объект должен содержать следующие поля:
-      - "name": строка (название найденного предмета на русском языке)
-      - "quantity": число (оценка количества, по умолчанию 1)
-      - "tags": массив строк (от 1 до 3 категорий, например: ["беспорядок", "одежда"])
-      
-      Пример ответа:
+      Analyze this photo of a room containing scattered items or clutter.
+      Identify items that are out of place or need organizing.
+      Return only a JSON array of objects, without extra text, Markdown, or prefixes.
+      Write all item names and tags in $outputLanguage.
+      Each object must contain:
+      - "name": string
+      - "quantity": number (estimated quantity, default 1)
+      - "tags": array of 1 to 3 category strings
+
+      Example structure:
       [
-        {"name": "Брошенная куртка", "quantity": 1, "tags": ["одежда", "прихожая"]},
-        {"name": "Чашка на столе", "quantity": 1, "tags": ["посуда", "комната"]}
+        {"name": "localized item name", "quantity": 1, "tags": ["localized tag"]}
       ]
       ''';
 
@@ -159,5 +167,13 @@ class GeminiService {
     }
 
     return [];
+  }
+
+  static String _languageName(String languageCode) {
+    return switch (languageCode) {
+      'ru' => 'Russian',
+      'he' => 'Hebrew',
+      _ => 'English',
+    };
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import '../main.dart';
+import '../l10n/app_localizations.dart';
 import '../models/room.dart';
 import 'storage_units_screen.dart';
 
@@ -15,21 +16,22 @@ class _RoomsScreenState extends State<RoomsScreen> {
   // Функция добавления новой комнаты через диалоговое окно
   void _showAddRoomDialog(BuildContext context) {
     final controller = TextEditingController();
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Новая комната'),
+          title: Text(l10n.newRoom),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(hintText: 'Например: Детская'),
+            decoration: InputDecoration(hintText: l10n.roomHint),
             autofocus: true,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -46,7 +48,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Сохранить'),
+              child: Text(l10n.save),
             ),
           ],
         );
@@ -56,9 +58,10 @@ class _RoomsScreenState extends State<RoomsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Комнаты в доме'),
+        title: Text(l10n.roomsTitle),
       ),
       body: StreamBuilder<List<Room>>(
         // Подписываемся на изменения в таблице комнат Isar в реальном времени
@@ -71,11 +74,11 @@ class _RoomsScreenState extends State<RoomsScreen> {
           final rooms = snapshot.data!;
 
           if (rooms.isEmpty) {
-            const Center(
+            return Center(
               child: Text(
-                'Список комнат пуст.\nНажмите "+" чтобы добавить первую.',
+                l10n.roomsEmpty,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
               ),
             );
           }

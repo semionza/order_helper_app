@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import '../main.dart';
+import '../l10n/app_localizations.dart';
 import '../models/item.dart';
 import '../models/shelf.dart';
 import '../models/storage_unit.dart';
@@ -23,15 +24,20 @@ class RoomCleanupResultScreen extends StatefulWidget {
 
 class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
   bool _isLoading = true;
+  bool _didStartLoading = false;
   RoomCleanupSession? _activeSession;
 
   @override
-  void initState() {
-    super.initState();
-    _loadOrAnalyzeSession();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didStartLoading) {
+      _didStartLoading = true;
+      _loadOrAnalyzeSession();
+    }
   }
 
   Future<void> _loadOrAnalyzeSession() async {
+    final l10n = AppLocalizations.of(context);
     RoomCleanupSession? session;
 
     if (widget.sessionId != null) {
@@ -39,7 +45,10 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
     } else if (widget.photoPath == null) {
       session = await isar.roomCleanupSessions.where().sortByCreatedAtDesc().findFirst();
     } else {
-      final results = await GeminiService.analyzeRoomCleanupPhoto(widget.photoPath!);
+      final results = await GeminiService.analyzeRoomCleanupPhoto(
+        widget.photoPath!,
+        languageCode: Localizations.localeOf(context).languageCode,
+      );
       final List<DetectedItemData> detectedList = [];
 
       for (var itemMap in results) {
@@ -80,14 +89,15 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                 if (storageUnit != null) {
                   final room = await isar.rooms.get(storageUnit.roomId);
                   if (room != null) {
-                    recommendation = 'Похоже на "${dbItem.name}": положите в ${room.name} ➔ ${storageUnit.name} ➔ ${shelf.name}';
+                    final location = '${room.name} ➔ ${storageUnit.name} ➔ ${shelf.name}';
+                    recommendation = l10n.recommendSimilarLocation(dbItem.name, location);
                     break;
                   }
                 }
               }
             }
           }
-          recommendation ??= 'Нет рекомендаций, положите в категорию "Без места"';
+          recommendation ??= l10n.recommendUnassigned;
         }
 
         final data = DetectedItemData()
@@ -130,13 +140,14 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
   Future<void> _showMatchSelectionDialog(DetectedItemData itemData) async {
     final similarMatches = await MatchingService.findSimilarItems(itemData.name);
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     showDialog(
       context: context,
       builder: (context) {
+        final l10n = AppLocalizations.of(context);
         return AlertDialog(
-          title: Text('Выбрать связь для "${itemData.name}"'),
+          title: Text(l10n.chooseMatchForItem(itemData.name)),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView(
@@ -144,8 +155,8 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.add_circle, color: Colors.orange),
-                  title: const Text('Создать как новый предмет'),
-                  subtitle: const Text('Не связывать с существующими в базе'),
+                  title: Text(l10n.createNewItem),
+                  subtitle: Text(l10n.doNotLinkExisting),
                   onTap: () async {
                     setState(() {
                       itemData.matchedIsarItemId = null;
@@ -157,17 +168,17 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                   },
                 ),
                 const Divider(),
-                const Text('Похожие вещи в базе:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                Text(l10n.similarItems, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
                 if (similarMatches.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text('Похожих вещей в базе не найдено', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(l10n.noSimilarItems, style: const TextStyle(color: Colors.grey, fontSize: 13)),
                   ),
                 ...similarMatches.map((match) {
                   return ListTile(
                     leading: const Icon(Icons.link, color: Colors.blue),
                     title: Text(match.item.name),
-                    subtitle: Text('Совпадение: ${match.confidencePercent}%'),
+                    subtitle: Text(l10n.matchPercent(match.confidencePercent)),
                     trailing: itemData.matchedIsarItemId == match.item.id 
                         ? const Icon(Icons.check, color: Colors.green) 
                         : null,
@@ -199,7 +210,7 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть')),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.close)),
           ],
         );
       },
@@ -219,7 +230,7 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
         ..shelfId = null;
     }
 
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     await showEditItemFormDialog(
       context: context,
@@ -238,14 +249,15 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Результаты уборки комнаты'),
+        title: Text(l10n.cleanupResultsTitle),
         actions: [
           if (_activeSession != null)
             IconButton(
               icon: const Icon(Icons.delete_sweep, color: Colors.red),
-              tooltip: 'Стереть результаты анализа',
+              tooltip: l10n.clearAnalysisTooltip,
               onPressed: () async {
                 await isar.writeTxn(() async {
                   await isar.roomCleanupSessions.delete(_activeSession!.id);
@@ -260,7 +272,7 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : (_activeSession == null || _activeSession!.items.isEmpty)
-              ? const Center(child: Text('Нет данных анализа.'))
+              ? Center(child: Text(l10n.noAnalysisData))
               : Column(
                   children: [
                     SizedBox(
@@ -268,11 +280,11 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                       width: double.infinity,
                       child: Image.file(File(_activeSession!.photoPath), fit: BoxFit.cover),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        'Распознанные предметы (отметьте убранные):',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        l10n.recognizedItems,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
                     const Divider(height: 1),
@@ -296,8 +308,8 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                                         children: [
                                           ListTile(
                                             leading: const Icon(Icons.check_circle, color: Colors.green),
-                                            title: const Text('Положить на место'),
-                                            subtitle: const Text('Сохранить вещь в базу и убрать из списка'),
+                                            title: Text(l10n.putAway),
+                                            subtitle: Text(l10n.saveAndRemove),
                                             onTap: () async {
                                               Navigator.pop(context);
                                               
@@ -337,8 +349,8 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                                           ),
                                           ListTile(
                                             leading: const Icon(Icons.delete, color: Colors.red),
-                                            title: const Text('Удалить'),
-                                            subtitle: const Text('Стереть и удалить из списка'),
+                                            title: Text(l10n.delete),
+                                            subtitle: Text(l10n.eraseAndRemove),
                                             onTap: () async {
                                               Navigator.pop(context);
 
@@ -390,14 +402,14 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                               ),
                                               const SizedBox(height: 2),
-                                              Text('Кол-во: ${itemData.quantity} | Теги: ${itemData.tags.join(', ')}'),
+                                              Text(l10n.itemQuantityAndTags(itemData.quantity, itemData.tags.join(', '))),
                                             ],
                                           ),
                                         ),
                                         IconButton(
                                           icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
                                           onPressed: () => _editItem(itemData),
-                                          tooltip: 'Редактировать вещь',
+                                          tooltip: l10n.editItemTooltip,
                                         ),
                                       ],
                                     ),
@@ -424,8 +436,8 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                                             Expanded(
                                               child: Text(
                                                 itemData.matchedIsarItemId != null && itemData.locationPath != null
-                                                    ? '🟢 В базе (${itemData.matchConfidence}%): ${itemData.locationPath}'
-                                                    : '🟡 Новый предмет (нажмите для выбора связи)',
+                                                    ? l10n.databaseMatch(itemData.matchConfidence, itemData.locationPath!)
+                                                    : l10n.newItemChooseMatch,
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w600,
@@ -470,7 +482,7 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                   final checkedItems = _activeSession!.items.where((e) => e.isSelected).toList();
                   if (checkedItems.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Отметьте галочками вещи, которые вы убрали')),
+                      SnackBar(content: Text(l10n.selectCleanedItems)),
                     );
                     return;
                   }
@@ -512,18 +524,18 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                     if (_activeSession!.items.isEmpty) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Комната полностью убрана! Сессия завершена.')),
+                        SnackBar(content: Text(l10n.roomCleanupComplete)),
                       );
                     } else {
                       setState(() {});
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Убрано предметов: ${checkedItems.length}. Осталось в комнате: ${_activeSession!.items.length}')),
+                        SnackBar(content: Text(l10n.cleanupProgress(checkedItems.length, _activeSession!.items.length))),
                       );
                     }
                   }
                 },
                 icon: const Icon(Icons.check_circle_outline),
-                label: Text('Положить на место (${_activeSession!.items.where((e) => e.isSelected).length})', style: const TextStyle(fontSize: 16)),
+                label: Text(l10n.putAwaySelected(_activeSession!.items.where((e) => e.isSelected).length), style: const TextStyle(fontSize: 16)),
               ),
             ),
     );

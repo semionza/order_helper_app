@@ -1,32 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
+import '../l10n/app_localizations.dart';
 
 class CleanupScreen extends StatefulWidget {
-  final String title; // Добавляем настраиваемый заголовок/подсказку
+  final String? title; // Добавляем настраиваемый заголовок/подсказку
 
   const CleanupScreen({
-    super.key, 
-    this.title = 'Сделайте фото полки для анализа', // Дефолтное значение
+    super.key,
+    this.title,
   });
 
   @override
   State<CleanupScreen> createState() => _CleanupScreenState();
 }
 
-class _CleanupScreenState extends State<CleanupScreen> {
+class _CleanupScreenState extends State<CleanupScreen> with WidgetsBindingObserver {
   CameraController? _controller;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
+  bool _isInitializingCamera = false;
+  bool _restartCameraWhenReady = false;
 
   // Экземпляр детектора объектов от Google ML Kit
   late ObjectDetector _objectDetector;
   bool _isDetecting = false;
-  String _detectedInfo = 'Сделайте фото полки для анализа';
+  String? _detectedInfo;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initCamera();
     _initObjectDetector();
   }
@@ -42,46 +46,89 @@ class _CleanupScreenState extends State<CleanupScreen> {
   }
 
   Future<void> _initCamera() async {
+    if (_isInitializingCamera || _controller != null) return;
+
+    _isInitializingCamera = true;
     try {
       _cameras = await availableCameras();
-      if (_cameras != null && _cameras!.isNotEmpty) {
-        _controller = CameraController(
+      if (!mounted || _cameras == null || _cameras!.isEmpty) return;
+
+      final controller = CameraController(
           _cameras![0],
           ResolutionPreset.medium,
           enableAudio: false,
-        );
+      );
+      _controller = controller;
 
-        await _controller!.initialize();
-        if (mounted) {
-          setState(() {
-            _isCameraInitialized = true;
-          });
-        }
+      await controller.initialize();
+      if (!mounted || _controller != controller) {
+        await controller.dispose();
+        return;
       }
+
+      setState(() => _isCameraInitialized = true);
     } catch (e) {
       debugPrint('Ошибка инициализации камеры: $e');
+      await _disposeCamera();
+    } finally {
+      _isInitializingCamera = false;
+      if (_restartCameraWhenReady && mounted) {
+        _restartCameraWhenReady = false;
+        _initCamera();
+      }
+    }
+  }
+
+  Future<void> _disposeCamera() async {
+    final controller = _controller;
+    _controller = null;
+    _isCameraInitialized = false;
+    if (controller != null) {
+      await controller.dispose();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _restartCameraWhenReady = false;
+      _disposeCamera();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_isInitializingCamera) {
+        _restartCameraWhenReady = true;
+      } else {
+        _initCamera();
+      }
     }
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _disposeCamera();
     _objectDetector.close();
     super.dispose();
   }
 
-Future<void> _takePictureAndDetect() async {
-    if (_controller == null || !_controller!.value.isInitialized || _isDetecting) return;
+  Future<void> _takePictureAndDetect() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized || _isDetecting) return;
 
     setState(() {
       _isDetecting = true;
-      _detectedInfo = 'Сохранение фото...';
+      _detectedInfo = AppLocalizations.of(context).savingPhoto;
     });
 
     try {
       // 1. Делаем снимок
-      final imageFile = await _controller!.takePicture();
+      final imageFile = await controller.takePicture();
       
+      if (!mounted) return;
+
+      // Release the camera before closing the route so Android has no pending requests.
+      await _disposeCamera();
       if (!mounted) return;
 
       // 2. Возвращаем путь к файлу на предыдущий экран (ShelvesScreen)
@@ -89,18 +136,21 @@ Future<void> _takePictureAndDetect() async {
 
     } catch (e) {
       debugPrint('Ошибка при сохранении фото: $e');
+      if (!mounted) return;
       setState(() {
         _isDetecting = false;
-        _detectedInfo = 'Ошибка при съемке';
+        _detectedInfo = AppLocalizations.of(context).captureError;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final title = widget.title ?? l10n.captureShelf;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title), // Используем переданный заголовок
+        title: Text(title), // Используем переданный заголовок
       ),
       body: _isCameraInitialized
           ? Stack(
@@ -117,11 +167,11 @@ Future<void> _takePictureAndDetect() async {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
+                      color: Colors.black.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      _detectedInfo,
+                      _detectedInfo ?? title,
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../main.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/locale_utils.dart';
 import '../models/item.dart';
 import '../models/shelf.dart';
 import '../models/storage_unit.dart';
@@ -28,6 +30,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   // Диалог редактирования вещи прямо из экрана поиска
   void _showEditItemDialog(BuildContext context, Item itemToEdit) {
+    final l10n = AppLocalizations.of(context);
+    final activeLocaleId = speechLocaleIdFor(context);
     final nameController = TextEditingController(text: itemToEdit.name);
     final quantityController = TextEditingController(text: itemToEdit.quantity.toString());
     final tagsController = TextEditingController(text: itemToEdit.tags.join(', '));
@@ -49,6 +53,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 if (available) {
                   setDialogState(() => isListening = true);
                   speech.listen(
+                    listenOptions: stt.SpeechListenOptions(localeId: activeLocaleId),
                     onResult: (val) {
                       setDialogState(() {
                         nameController.text = val.recognizedWords;
@@ -63,7 +68,7 @@ class _SearchScreenState extends State<SearchScreen> {
             }
 
             return AlertDialog(
-              title: const Text('Редактировать вещь'),
+              title: Text(l10n.editItem),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -74,7 +79,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         Expanded(
                           child: TextField(
                             controller: nameController,
-                            decoration: const InputDecoration(labelText: 'Название вещи'),
+                            decoration: InputDecoration(labelText: l10n.itemNameLabel),
                             autofocus: true,
                           ),
                         ),
@@ -87,16 +92,16 @@ class _SearchScreenState extends State<SearchScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: quantityController,
-                      decoration: const InputDecoration(labelText: 'Количество'),
+                      decoration: InputDecoration(labelText: l10n.quantityLabel),
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: tagsController,
-                      decoration: const InputDecoration(labelText: 'Теги (через запятую)', hintText: 'одежда, зима'),
+                      decoration: InputDecoration(labelText: l10n.tagsLabel, hintText: l10n.tagsHint),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Место хранения:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(l10n.storageLocationLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 4),
                     FutureBuilder<List<ShelfInfoDropdown>>(
                       future: _loadAllShelvesForDropdown(),
@@ -106,16 +111,16 @@ class _SearchScreenState extends State<SearchScreen> {
                         final shelvesList = snapshot.data!;
 
                         return DropdownButtonFormField<int?>(
-                          value: selectedShelfId,
+                          initialValue: selectedShelfId,
                           isExpanded: true,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           ),
                           items: [
-                            const DropdownMenuItem<int?>(
+                            DropdownMenuItem<int?>(
                               value: null,
-                              child: Text('📍 Без полки (пока не решил)', style: TextStyle(color: Colors.grey)),
+                              child: Text(l10n.unassignedShelf, style: const TextStyle(color: Colors.grey)),
                             ),
                             ...shelvesList.map((s) => DropdownMenuItem<int?>(
                               value: s.shelfId,
@@ -146,7 +151,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             }
                           },
                           icon: const Icon(Icons.camera_alt),
-                          label: const Text('Фото'),
+                          label: Text(l10n.photo),
                         ),
                         const SizedBox(width: 12),
                         if (itemPhotoPath != null)
@@ -170,7 +175,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     speech.stop();
                     Navigator.pop(context);
                   },
-                  child: const Text('Отмена'),
+                  child: Text(l10n.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -195,7 +200,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     }
                     if (context.mounted) Navigator.pop(context);
                   },
-                  child: const Text('Сохранить'),
+                  child: Text(l10n.save),
                 ),
               ],
             );
@@ -206,6 +211,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<List<ShelfInfoDropdown>> _loadAllShelvesForDropdown() async {
+    final l10n = AppLocalizations.of(context);
     final allShelves = await isar.shelfs.where().findAll();
     List<ShelfInfoDropdown> result = [];
 
@@ -213,8 +219,8 @@ class _SearchScreenState extends State<SearchScreen> {
       final unit = await isar.storageUnits.get(shelf.storageUnitId);
       final room = unit != null ? await isar.rooms.get(unit.roomId) : null;
 
-      final roomName = room?.name ?? 'Комната';
-      final unitName = unit?.name ?? 'Шкаф';
+      final roomName = room?.name ?? l10n.fallbackRoom;
+      final unitName = unit?.name ?? l10n.fallbackStorageUnit;
 
       result.add(ShelfInfoDropdown(
         shelfId: shelf.id,
@@ -226,6 +232,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: TextField(
@@ -234,8 +241,8 @@ class _SearchScreenState extends State<SearchScreen> {
           cursorColor: Colors.white,
           style: const TextStyle(color: Colors.black, fontSize: 18),
           decoration: InputDecoration(
-            hintText: 'Поиск вещей...',
-            hintStyle: TextStyle(color: Colors.grey.withOpacity(0.6)),
+            hintText: l10n.searchHint,
+            hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.6)),
             border: InputBorder.none,
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
@@ -257,10 +264,10 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
       body: _searchQuery.isEmpty
-          ? const Center(
+              ? Center(
               child: Text(
-                'Введите название вещи для поиска',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                l10n.searchPrompt,
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
               ),
             )
           : StreamBuilder<List<Item>>(
@@ -273,10 +280,10 @@ class _SearchScreenState extends State<SearchScreen> {
                 final items = snapshot.data!;
 
                 if (items.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text(
-                      'Ничего не найдено',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                      l10n.searchNoResults,
+                      style: const TextStyle(color: Colors.grey, fontSize: 16),
                     ),
                   );
                 }
@@ -319,7 +326,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const SizedBox(height: 4),
-                                    Text('Количество: ${item.quantity}'),
+                                    Text(l10n.quantityValue(item.quantity)),
                                     const SizedBox(height: 2),
                                     Text(
                                       '📍 ${location['room']} ➔ ${location['unit']} ➔ ${location['shelf']}',
@@ -343,7 +350,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<Map<String, String>> _resolveItemLocation(int? shelfId) async {
     if (shelfId == null) {
-      return {'room': 'Без места', 'unit': 'Не привязано', 'shelf': '—'};
+      final l10n = AppLocalizations.of(context);
+      return {'room': l10n.unassignedLocation, 'unit': l10n.notLinkedLocation, 'shelf': '—'};
     }
 
     final shelf = await isar.shelfs.get(shelfId);

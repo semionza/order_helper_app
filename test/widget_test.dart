@@ -1,30 +1,57 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:order_helper_app/l10n/app_locale_controller.dart';
+import 'package:order_helper_app/l10n/app_localizations.dart';
+import 'package:order_helper_app/l10n/locale_utils.dart';
 import 'package:order_helper_app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  tearDown(() => appLocale.value = null);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  Widget localizedApp(Locale locale) {
+    return MaterialApp(
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('ru'), Locale('he')],
+      home: Builder(
+        builder: (context) => Text(
+          '${AppLocalizations.of(context).appTitle}|${speechLocaleIdFor(context)}',
+        ),
+      ),
+    );
+  }
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('Hebrew localization uses RTL and he_IL speech', (tester) async {
+    await tester.pumpWidget(localizedApp(const Locale('he')));
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('מדריך לסדר|he_IL'), findsOneWidget);
+    expect(Directionality.of(tester.element(find.byType(Text))), TextDirection.rtl);
+  });
+
+  testWidgets('English and Russian use matching speech locales', (tester) async {
+    await tester.pumpWidget(localizedApp(const Locale('en')));
+    expect(find.text('Order Guide|en_US'), findsOneWidget);
+
+    await tester.pumpWidget(localizedApp(const Locale('ru')));
+    expect(find.text('Гид по порядку|ru_RU'), findsOneWidget);
+  });
+
+  testWidgets('Home language menu changes the application locale', (tester) async {
+    appLocale.value = const Locale('en');
+    await tester.pumpWidget(const OrderHelperApp());
+
+    await tester.tap(find.byIcon(Icons.language));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('RU · Russian'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Гид по порядку'), findsOneWidget);
+    expect(appLocale.value, const Locale('ru'));
   });
 }

@@ -1,9 +1,10 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../main.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/locale_utils.dart';
 import '../models/shelf.dart';
 import '../models/item.dart';
 import '../models/storage_unit.dart';
@@ -20,22 +21,11 @@ class ItemsScreen extends StatefulWidget {
 }
 
 class _ItemsScreenState extends State<ItemsScreen> {
-  // Список доступных языков для голосового ввода
-  static int _currentLangIndex = 0;
-  final List<Map<String, String>> _languages = [
-    {'code': 'ru_RU', 'label': 'RU'},
-    {'code': 'en_US', 'label': 'EN'},
-    {'code': 'he_IL', 'label': 'HE'},
-  ];
-
-  void _cycleLanguage() {
-    setState(() {
-      _currentLangIndex = (_currentLangIndex + 1) % _languages.length;
-    });
-  }
   // Универсальный диалог для создания или редактирования вещи
   void _showItemDialog(BuildContext context, {Item? itemToEdit}) {
     final isEditing = itemToEdit != null;
+    final l10n = AppLocalizations.of(context);
+    int speechLocaleIndex = speechLocaleIndexFor(context);
     
     final nameController = TextEditingController(text: isEditing ? itemToEdit.name : '');
     final quantityController = TextEditingController(text: isEditing ? itemToEdit.quantity.toString() : '1');
@@ -58,11 +48,11 @@ class _ItemsScreenState extends State<ItemsScreen> {
                 if (available) {
                   setDialogState(() => isListening = true);
                   
-                  final activeLocaleId = _languages[_currentLangIndex]['code'];
+                  final activeLocaleId = speechLocaleOptions[speechLocaleIndex].localeId;
                   debugPrint('DEBUG: Запуск голосового ввода с локалью -> $activeLocaleId');
 
                   speech.listen(
-                    localeId: activeLocaleId,
+                    listenOptions: stt.SpeechListenOptions(localeId: activeLocaleId),
                     onResult: (val) {
                       setDialogState(() {
                         nameController.text = val.recognizedWords;
@@ -77,7 +67,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
             }
 
             return AlertDialog(
-              title: Text(isEditing ? 'Редактировать вещь' : 'Новая вещь'),
+              title: Text(isEditing ? l10n.editItem : l10n.newItem),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -89,16 +79,19 @@ class _ItemsScreenState extends State<ItemsScreen> {
                         Expanded(
                           child: TextField(
                             controller: nameController,
-                            decoration: const InputDecoration(labelText: 'Название вещи'),
+                            decoration: InputDecoration(labelText: l10n.itemNameLabel),
                             autofocus: true,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        // Клик по языковому бейджу переключает язык циклично
                         InkWell(
                           onTap: () {
+                            if (isListening) {
+                              speech.stop();
+                            }
                             setDialogState(() {
-                              _currentLangIndex = (_currentLangIndex + 1) % _languages.length;
+                              isListening = false;
+                              speechLocaleIndex = (speechLocaleIndex + 1) % speechLocaleOptions.length;
                             });
                           },
                           borderRadius: BorderRadius.circular(4),
@@ -110,44 +103,32 @@ class _ItemsScreenState extends State<ItemsScreen> {
                               color: Colors.blue.shade50,
                             ),
                             child: Text(
-                              _languages[_currentLangIndex]['label']!,
+                              speechLocaleOptions[speechLocaleIndex].label,
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue),
                             ),
                           ),
                         ),
-                        // Кнопка микрофона: обычный тап — запись, долгое нажатие — смена языка
                         IconButton(
                           icon: Icon(isListening ? Icons.mic : Icons.mic_none, color: isListening ? Colors.red : Colors.blue),
                           onPressed: listen,
-                          onLongPress: () {
-                            setDialogState(() {
-                              _currentLangIndex = (_currentLangIndex + 1) % _languages.length;
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Язык изменен на: ${_languages[_currentLangIndex]['label']}'),
-                                duration: const Duration(milliseconds: 600),
-                              ),
-                            );
-                          },
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: quantityController,
-                      decoration: const InputDecoration(labelText: 'Количество'),
+                      decoration: InputDecoration(labelText: l10n.quantityLabel),
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: tagsController,
-                      decoration: const InputDecoration(labelText: 'Теги (через запятую)', hintText: 'одежда, зима'),
+                      decoration: InputDecoration(labelText: l10n.tagsLabel, hintText: l10n.tagsHint),
                     ),
                     const SizedBox(height: 16),
 
                     // Выбор местоположения (Полка / Без места)
-                    const Text('Место хранения:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(l10n.storageLocationLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 4),
                     FutureBuilder<List<ShelfInfoDropdown>>(
                       future: _loadAllShelvesForDropdown(),
@@ -157,16 +138,16 @@ class _ItemsScreenState extends State<ItemsScreen> {
                         final shelvesList = snapshot.data!;
 
                         return DropdownButtonFormField<int?>(
-                          value: selectedShelfId,
+                          initialValue: selectedShelfId,
                           isExpanded: true,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           ),
                           items: [
-                            const DropdownMenuItem<int?>(
+                            DropdownMenuItem<int?>(
                               value: null,
-                              child: Text('📍 Без полки (пока не решил)', style: TextStyle(color: Colors.grey)),
+                              child: Text(l10n.unassignedShelf, style: const TextStyle(color: Colors.grey)),
                             ),
                             ...shelvesList.map((s) => DropdownMenuItem<int?>(
                               value: s.shelfId,
@@ -199,7 +180,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                             }
                           },
                           icon: const Icon(Icons.camera_alt),
-                          label: const Text('Фото'),
+                          label: Text(l10n.photo),
                         ),
                         const SizedBox(width: 12),
                         if (itemPhotoPath != null)
@@ -223,7 +204,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                     speech.stop();
                     Navigator.pop(context);
                   },
-                  child: const Text('Отмена'),
+                  child: Text(l10n.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -258,7 +239,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                     }
                     if (context.mounted) Navigator.pop(context);
                   },
-                  child: Text(isEditing ? 'Сохранить' : 'Добавить'),
+                  child: Text(isEditing ? l10n.save : l10n.add),
                 ),
               ],
             );
@@ -270,6 +251,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
 
   // Вспомогательный метод для загрузки всех полок с их иерархией для выпадающего списка
   Future<List<ShelfInfoDropdown>> _loadAllShelvesForDropdown() async {
+    final l10n = AppLocalizations.of(context);
     final allShelves = await isar.shelfs.where().findAll();
     List<ShelfInfoDropdown> result = [];
 
@@ -277,8 +259,8 @@ class _ItemsScreenState extends State<ItemsScreen> {
       final unit = await isar.storageUnits.get(shelf.storageUnitId);
       final room = unit != null ? await isar.rooms.get(unit.roomId) : null;
 
-      final roomName = room?.name ?? 'Комната';
-      final unitName = unit?.name ?? 'Шкаф';
+      final roomName = room?.name ?? l10n.fallbackRoom;
+      final unitName = unit?.name ?? l10n.fallbackStorageUnit;
 
       result.add(ShelfInfoDropdown(
         shelfId: shelf.id,
@@ -290,8 +272,9 @@ class _ItemsScreenState extends State<ItemsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text('Вещи: ${widget.shelf.name}')),
+      appBar: AppBar(title: Text(l10n.itemsOnShelfTitle(widget.shelf.name))),
       body: StreamBuilder<List<Item>>(
         stream: isar.items.filter().shelfIdEqualTo(widget.shelf.id).watch(fireImmediately: true),
         builder: (context, snapshot) {
@@ -302,11 +285,11 @@ class _ItemsScreenState extends State<ItemsScreen> {
           final items = snapshot.data!;
 
           if (items.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'На этой полке пока ничего нет.\nНажмите "+", чтобы добавить вещь.',
+                l10n.itemsOnShelfEmpty,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
               ),
             );
           }
@@ -336,7 +319,7 @@ class _ItemsScreenState extends State<ItemsScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Количество: ${item.quantity}'),
+                      Text(l10n.quantityValue(item.quantity)),
                       if (item.tags.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Wrap(

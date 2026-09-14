@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import '../main.dart';
+import '../l10n/app_localizations.dart';
 import '../models/room.dart';
 import '../models/storage_unit.dart';
 import '../models/shelf.dart';
@@ -14,21 +15,22 @@ class StorageUnitsScreen extends StatelessWidget {
 
   void _showAddStorageDialog(BuildContext context) {
     final controller = TextEditingController();
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Мебель в комнате: ${room.name}'),
+          title: Text(l10n.furnitureInRoom(room.name)),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(hintText: 'Например: Шкаф, Стеллаж, Комод'),
+            decoration: InputDecoration(hintText: l10n.furnitureHint),
             autofocus: true,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -44,7 +46,7 @@ class StorageUnitsScreen extends StatelessWidget {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Добавить'),
+              child: Text(l10n.add),
             ),
           ],
         );
@@ -55,15 +57,16 @@ class StorageUnitsScreen extends StatelessWidget {
   // Диалог редактирования или удаления шкафа
   void _showEditStorageDialog(BuildContext context, StorageUnit unit) {
     final controller = TextEditingController(text: unit.name);
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Редактировать шкаф'),
+          title: Text(l10n.editStorageUnit),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(labelText: 'Название мебели'),
+            decoration: InputDecoration(labelText: l10n.storageUnitNameLabel),
             autofocus: true,
           ),
           actions: [
@@ -74,14 +77,14 @@ class StorageUnitsScreen extends StatelessWidget {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Удалить шкаф?'),
-                    content: const Text('Все полки этого шкафа будут удалены. Вещи на них сохранятся, но перейдут в категорию "Без места".'),
+                    title: Text(l10n.deleteStorageUnitQuestion),
+                    content: Text(l10n.deleteStorageUnitWarning),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Удалить'),
+                        child: Text(l10n.delete),
                       ),
                     ],
                   ),
@@ -112,11 +115,11 @@ class StorageUnitsScreen extends StatelessWidget {
                   }
                 }
               },
-              child: const Text('Удалить шкаф'),
+              child: Text(l10n.deleteStorageUnit),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -129,7 +132,7 @@ class StorageUnitsScreen extends StatelessWidget {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Сохранить'),
+              child: Text(l10n.save),
             ),
           ],
         );
@@ -139,6 +142,7 @@ class StorageUnitsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(room.name)),
       body: StreamBuilder<List<StorageUnit>>(
@@ -151,11 +155,11 @@ class StorageUnitsScreen extends StatelessWidget {
           final units = snapshot.data!;
 
           if (units.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'Здесь пока нет мебели.\nНажмите "+", чтобы добавить шкаф или стеллаж.',
+                l10n.storageUnitsEmpty,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
               ),
             );
           }
@@ -169,7 +173,7 @@ class StorageUnitsScreen extends StatelessWidget {
                 child: ListTile(
                   leading: const Icon(Icons.kitchen, color: Colors.blue),
                   title: Text(unit.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Удерживайте для редактирования', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  subtitle: Text(l10n.holdToEdit, style: const TextStyle(fontSize: 11, color: Colors.grey)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     Navigator.push(

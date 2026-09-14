@@ -3,25 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../main.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/locale_utils.dart';
 import '../models/shelf.dart';
 import '../models/item.dart';
 import '../models/storage_unit.dart';
 import '../models/room.dart';
 import '../screens/cleanup_screen.dart';
 
-// Глобальные переменные для сохранения состояния языка голосового ввода между вызовами
-int _dialogLangIndex = 0;
-final List<Map<String, String>> _dialogLanguages = [
-  {'code': 'ru_RU', 'label': 'RU'},
-  {'code': 'en_US', 'label': 'EN'},
-  {'code': 'he_IL', 'label': 'HE'},
-];
-
 Future<void> showEditItemFormDialog({
   required BuildContext context,
   required Item item,
   required VoidCallback onSaved,
 }) async {
+  final l10n = AppLocalizations.of(context);
+  int speechLocaleIndex = speechLocaleIndexFor(context);
   final nameController = TextEditingController(text: item.name);
   final quantityController = TextEditingController(text: item.quantity.toString());
   final tagsController = TextEditingController(text: item.tags.join(', '));
@@ -41,8 +37,8 @@ Future<void> showEditItemFormDialog({
       final unit = await isar.storageUnits.get(shelf.storageUnitId);
       final room = unit != null ? await isar.rooms.get(unit.roomId) : null;
 
-      final roomName = room?.name ?? 'Комната';
-      final unitName = unit?.name ?? 'Шкаф';
+      final roomName = room?.name ?? l10n.fallbackRoom;
+      final unitName = unit?.name ?? l10n.fallbackStorageUnit;
 
       result.add(ShelfInfoDropdown(
         shelfId: shelf.id,
@@ -67,9 +63,9 @@ Future<void> showEditItemFormDialog({
               if (available) {
                 setDialogState(() => isListening = true);
                 
-                final activeLocaleId = _dialogLanguages[_dialogLangIndex]['code'];
+                final activeLocaleId = speechLocaleOptions[speechLocaleIndex].localeId;
                 speech.listen(
-                  localeId: activeLocaleId,
+                  listenOptions: stt.SpeechListenOptions(localeId: activeLocaleId),
                   onResult: (val) {
                     setDialogState(() {
                       nameController.text = val.recognizedWords;
@@ -84,7 +80,7 @@ Future<void> showEditItemFormDialog({
           }
 
           return AlertDialog(
-            title: const Text('Редактировать вещь'),
+            title: Text(l10n.editItem),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -96,15 +92,19 @@ Future<void> showEditItemFormDialog({
                       Expanded(
                         child: TextField(
                           controller: nameController,
-                          decoration: const InputDecoration(labelText: 'Название вещи'),
+                          decoration: InputDecoration(labelText: l10n.itemNameLabel),
                           autofocus: true,
                         ),
                       ),
                       const SizedBox(width: 4),
                       InkWell(
                         onTap: () {
+                          if (isListening) {
+                            speech.stop();
+                          }
                           setDialogState(() {
-                            _dialogLangIndex = (_dialogLangIndex + 1) % _dialogLanguages.length;
+                            isListening = false;
+                            speechLocaleIndex = (speechLocaleIndex + 1) % speechLocaleOptions.length;
                           });
                         },
                         borderRadius: BorderRadius.circular(4),
@@ -116,7 +116,7 @@ Future<void> showEditItemFormDialog({
                             color: Colors.blue.shade50,
                           ),
                           child: Text(
-                            _dialogLanguages[_dialogLangIndex]['label']!,
+                            speechLocaleOptions[speechLocaleIndex].label,
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue),
                           ),
                         ),
@@ -124,47 +124,36 @@ Future<void> showEditItemFormDialog({
                       IconButton(
                         icon: Icon(isListening ? Icons.mic : Icons.mic_none, color: isListening ? Colors.red : Colors.blue),
                         onPressed: listen,
-                        onLongPress: () {
-                          setDialogState(() {
-                            _dialogLangIndex = (_dialogLangIndex + 1) % _dialogLanguages.length;
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Язык изменен на: ${_dialogLanguages[_dialogLangIndex]['label']}'),
-                              duration: const Duration(milliseconds: 600),
-                            ),
-                          );
-                        },
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: quantityController,
-                    decoration: const InputDecoration(labelText: 'Количество'),
+                    decoration: InputDecoration(labelText: l10n.quantityLabel),
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: tagsController,
-                    decoration: const InputDecoration(labelText: 'Теги (через запятую)', hintText: 'одежда, зима'),
+                    decoration: InputDecoration(labelText: l10n.tagsLabel, hintText: l10n.tagsHint),
                   ),
                   const SizedBox(height: 16),
 
                   // Выбор местоположения (Полка / Без места)
-                  const Text('Место хранения:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text(l10n.storageLocationLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(height: 4),
                   DropdownButtonFormField<int?>(
-                    value: selectedShelfId,
+                    initialValue: selectedShelfId,
                     isExpanded: true,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     ),
                     items: [
-                      const DropdownMenuItem<int?>(
+                      DropdownMenuItem<int?>(
                         value: null,
-                        child: Text('📍 Без полки (пока не решил)', style: TextStyle(color: Colors.grey)),
+                        child: Text(l10n.unassignedShelf, style: const TextStyle(color: Colors.grey)),
                       ),
                       ...shelvesList.map((s) => DropdownMenuItem<int?>(
                         value: s.shelfId,
@@ -186,7 +175,7 @@ Future<void> showEditItemFormDialog({
                         onPressed: () async {
                           final photoPath = await Navigator.push<String>(
                             context,
-                            MaterialPageRoute(builder: (context) => const CleanupScreen(title: 'Сделайте фото вещи')),
+                            MaterialPageRoute(builder: (context) => CleanupScreen(title: l10n.captureItem)),
                           );
                           if (photoPath != null) {
                             setDialogState(() {
@@ -195,7 +184,7 @@ Future<void> showEditItemFormDialog({
                           }
                         },
                         icon: const Icon(Icons.camera_alt),
-                        label: const Text('Фото'),
+                        label: Text(l10n.photo),
                       ),
                       const SizedBox(width: 12),
                       if (itemPhotoPath != null)
@@ -219,7 +208,7 @@ Future<void> showEditItemFormDialog({
                   speech.stop();
                   Navigator.pop(context);
                 },
-                child: const Text('Отмена'),
+                child: Text(l10n.cancel),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -245,7 +234,7 @@ Future<void> showEditItemFormDialog({
                   }
                   if (context.mounted) Navigator.pop(context);
                 },
-                child: const Text('Сохранить'),
+                child: Text(l10n.save),
               ),
             ],
           );

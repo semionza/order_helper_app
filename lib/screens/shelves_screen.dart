@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import '../main.dart';
+import '../l10n/app_localizations.dart';
 import '../models/storage_unit.dart';
 import '../models/shelf.dart';
 import '../models/item.dart';
@@ -24,21 +25,22 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
 
   void _showAddShelfDialog(BuildContext context) {
     final controller = TextEditingController();
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Полка в: ${widget.storageUnit.name}'),
+          title: Text(l10n.shelfInStorageUnit(widget.storageUnit.name)),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(hintText: 'Например: Верхняя полка, Ящик 1'),
+            decoration: InputDecoration(hintText: l10n.shelfHint),
             autofocus: true,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -54,7 +56,7 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Добавить'),
+              child: Text(l10n.add),
             ),
           ],
         );
@@ -65,15 +67,16 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
   // Диалог редактирования или удаления полки
   void _showEditShelfDialog(BuildContext context, Shelf shelf) {
     final controller = TextEditingController(text: shelf.name);
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Редактировать полку'),
+          title: Text(l10n.editShelf),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(labelText: 'Название полки'),
+            decoration: InputDecoration(labelText: l10n.shelfNameLabel),
             autofocus: true,
           ),
           actions: [
@@ -83,14 +86,14 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Удалить полку?'),
-                    content: const Text('Все вещи с этой полки сохранятся, но перейдут в категорию "Без места".'),
+                    title: Text(l10n.deleteShelfQuestion),
+                    content: Text(l10n.deleteShelfWarning),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Удалить'),
+                        child: Text(l10n.delete),
                       ),
                     ],
                   ),
@@ -114,11 +117,11 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                   }
                 }
               },
-              child: const Text('Удалить полку'),
+              child: Text(l10n.deleteShelf),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -131,7 +134,7 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                 }
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Сохранить'),
+              child: Text(l10n.save),
             ),
           ],
         );
@@ -141,19 +144,23 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
 
   Future<void> _analyzeShelfWithAI(Shelf shelf) async {
     if (shelf.photoPath == null) return;
+    final l10n = AppLocalizations.of(context);
 
     setState(() {
       _isAnalyzing[shelf.id] = true;
     });
 
     try {
-      final detectedItems = await GeminiService.analyzeShelfPhoto(shelf.photoPath!);
+      final detectedItems = await GeminiService.analyzeShelfPhoto(
+        shelf.photoPath!,
+        languageCode: Localizations.localeOf(context).languageCode,
+      );
 
       if (detectedItems.isNotEmpty) {
         await isar.writeTxn(() async {
           for (var itemMap in detectedItems) {
             final newItem = Item()
-              ..name = itemMap['name'] ?? 'Предмет'
+              ..name = itemMap['name'] ?? l10n.newItem
               ..quantity = itemMap['quantity'] ?? 1
               ..tags = List<String>.from(itemMap['tags'] ?? [])
               ..shelfId = shelf.id;
@@ -164,13 +171,13 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('AI успешно добавил ${detectedItems.length} предметов!')),
+            SnackBar(content: Text(l10n.aiItemsAdded(detectedItems.length))),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(key: Key('error_snackbar'), content: Text('AI не смог распознать предметы или не настроен API ключ.')),
+            SnackBar(key: const Key('error_snackbar'), content: Text(l10n.aiRecognitionFailed)),
           );
         }
       }
@@ -187,6 +194,7 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(widget.storageUnit.name)),
       body: StreamBuilder<List<Shelf>>(
@@ -199,11 +207,11 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
           final shelves = snapshot.data!;
 
           if (shelves.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'Нет полок.\nДобавьте полку или ящик.',
+                l10n.shelvesEmpty,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
               ),
             );
           }
@@ -237,7 +245,7 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(shelf.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                const Text('Удерживайте для редактирования', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                Text(l10n.holdToEdit, style: const TextStyle(fontSize: 10, color: Colors.grey)),
                               ],
                             ),
                             IconButton(
@@ -245,7 +253,7 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                               onPressed: () async {
                                 final photoPath = await Navigator.push<String>(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const CleanupScreen()),
+                                  MaterialPageRoute(builder: (context) => CleanupScreen(title: l10n.captureShelf)),
                                 );
 
                                 if (photoPath != null) {
@@ -277,7 +285,7 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                               icon: analyzing 
                                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                                   : const Icon(Icons.auto_awesome, color: Colors.amber),
-                              label: Text(analyzing ? 'Анализируем полку...' : 'Распознать вещи с AI'),
+                              label: Text(analyzing ? l10n.analyzingShelf : l10n.recognizeItemsWithAi),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepPurple.shade50,
                                 foregroundColor: Colors.deepPurple,
@@ -299,7 +307,7 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
                               );
                             },
                             icon: const Icon(Icons.playlist_add, color: Colors.blue),
-                            label: const Text('Добавить из базы (выбрать существующие)'),
+                            label: Text(l10n.addExistingItems),
                           ),
                         ),
                       ],

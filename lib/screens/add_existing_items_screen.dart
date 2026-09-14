@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import '../main.dart';
+import '../l10n/app_localizations.dart';
 import '../models/shelf.dart';
 import '../models/item.dart';
 
@@ -20,9 +21,10 @@ class _AddExistingItemsScreenState extends State<AddExistingItemsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Добавить из базы: ${widget.targetShelf.name}'),
+        title: Text(l10n.addFromDatabaseTitle(widget.targetShelf.name)),
       ),
       body: Column(
         children: [
@@ -32,7 +34,7 @@ class _AddExistingItemsScreenState extends State<AddExistingItemsScreen> {
             child: Row(
               children: [
                 FilterChip(
-                  label: const Text('📍 Только без места'),
+                  label: Text(l10n.onlyUnassigned),
                   selected: _onlyUnassigned,
                   onSelected: (bool value) {
                     setState(() {
@@ -58,10 +60,10 @@ class _AddExistingItemsScreenState extends State<AddExistingItemsScreen> {
                 final items = snapshot.data!;
 
                 if (items.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text(
-                      'Нет доступных вещей в базе',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                      l10n.noDatabaseItems,
+                      style: const TextStyle(color: Colors.grey, fontSize: 16),
                     ),
                   );
                 }
@@ -97,7 +99,7 @@ class _AddExistingItemsScreenState extends State<AddExistingItemsScreen> {
                           ),
                         ),
                         subtitle: Text(
-                          isAlreadyHere ? 'Уже на этой полке' : 'Количество: ${item.quantity}',
+                          isAlreadyHere ? l10n.alreadyOnShelf : l10n.quantityValue(item.quantity),
                           style: TextStyle(color: isAlreadyHere ? Colors.grey : Colors.blueGrey),
                         ),
                         secondary: item.photoPath != null
@@ -149,12 +151,12 @@ class _AddExistingItemsScreenState extends State<AddExistingItemsScreen> {
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Успешно привязано предметов: ${_selectedItemIds.length}')),
+                      SnackBar(content: Text(l10n.itemsLinked(_selectedItemIds.length))),
                     );
                   }
                 },
           icon: const Icon(Icons.done_all),
-          label: Text('Перенести выбранное (${_selectedItemIds.length})', style: const TextStyle(fontSize: 16)),
+          label: Text(l10n.moveSelected(_selectedItemIds.length), style: const TextStyle(fontSize: 16)),
         ),
       ),
     );
