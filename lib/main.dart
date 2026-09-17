@@ -40,6 +40,7 @@ class OrderHelperApp extends StatelessWidget {
       valueListenable: appLocale,
       builder: (context, locale, child) => MaterialApp(
         locale: locale,
+        debugShowCheckedModeBanner: false,
         onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
         localizationsDelegates: const [
           AppLocalizations.delegate,

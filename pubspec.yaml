@@ -39,7 +39,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # Пакет для работы с камерой
-  camera: ^0.10.5+6
+  camera: ^0.12.1
   
   # Пакеты для локальной базы данных Isar
   isar: ^3.1.0+1
@@ -48,7 +48,7 @@ dependencies:
   shared_preferences: ^2.5.3
 
   # Добавляем Google ML Kit для распознавания объектов
-  google_mlkit_object_detection: ^0.15.1
+  google_mlkit_object_detection: ^0.17.1
 
   # Добавляем пакет распознавания речи
   speech_to_text: ^7.4.0
@@ -65,11 +65,13 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
   # Генератор кода для базы данных
   isar_generator: ^3.1.0+1
   build_runner: ^2.4.13
+
+  flutter_launcher_icons: ^0.14.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -114,3 +116,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  image_path: "assets/icon.png"
+  android: true
+  ios: true
+  adaptive_icon_background: "#FFFFFF"
+  # adaptive_icon_foreground: "assets/icon_foreground.png"
