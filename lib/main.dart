@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'config.dart';
 import 'l10n/app_locale_controller.dart';
 import 'l10n/app_localizations.dart';
 import 'models/room.dart';
@@ -12,6 +14,7 @@ import 'models/room_cleanup_session.dart';
 import 'models/usage_stats.dart';
 import 'screens/home_screen.dart';
 import 'services/purchase_service.dart';
+import 'services/supabase_service.dart';
 
 // Глобальная переменная для доступа к базе данных из любого места
 late Isar isar;
@@ -38,6 +41,19 @@ void main() async {
   );
 
   await PurchaseService.instance.init();
+
+  // device_id уходит в заголовке: по нему RLS-политики Supabase определяют участника группы.
+  final deviceId = await SupabaseService.instance.deviceId();
+  await Supabase.initialize(
+    url: Config.supabaseUrl,
+    publishableKey: Config.supabasePublishableKey,
+    headers: {SupabaseService.deviceIdHeader: deviceId},
+  );
+
+  // Премиум владельца снимает лимит участников в серверном триггере.
+  PurchaseService.instance.isPremium.addListener(
+    () => SupabaseService.instance.syncPremiumStatus(),
+  );
 
   runApp(const OrderHelperApp());
 }

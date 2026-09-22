@@ -11,6 +11,9 @@ class AppConfig {
   /// Максимальное количество AI-анализов (Gemini) в месяц для бесплатной версии.
   static const int maxFreeAiScansPerMonth = 5;
 
+  /// Максимальное число устройств в семейной группе для бесплатной версии.
+  static const int maxFreeGroupDevices = 2;
+
   /// Включите, чтобы локально открыть все премиум-функции без покупки (только для отладки).
   static const bool forcePremiumForTesting = false;
 

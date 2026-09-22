@@ -414,6 +414,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String premiumLimitDevicesReached(int limit) {
+    return 'The free plan supports $limit devices in a family group. Upgrade to Premium to connect more.';
+  }
+
+  @override
+  String get premiumBenefitFamilySync => 'Family sync across unlimited devices';
+
+  @override
   String get premiumRestore => 'Restore purchases';
 
   @override
@@ -436,6 +444,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get premiumHomeTitle => 'Premium';
+
+  @override
+  String get familySyncTitle => 'Family sync';
+
+  @override
+  String get familySyncSubtitle => 'Share your catalog with another device';
+
+  @override
+  String get familySyncNotConnected =>
+      'This device is not connected to a shared space yet.';
+
+  @override
+  String get createSharedSpace => 'Create shared space';
+
+  @override
+  String get joinSharedSpace => 'Join by QR code';
+
+  @override
+  String get sharedSpaceCreated => 'Shared space created';
+
+  @override
+  String get sharedSpaceCreateFailed =>
+      'The shared space could not be created.';
+
+  @override
+  String get scanQrTitle => 'Scan the invitation code';
+
+  @override
+  String get scanQrHint => 'Point the camera at the QR code on the host device';
+
+  @override
+  String get invitationQrHint => 'Scan this code on the second device to join';
+
+  @override
+  String get groupIdLabel => 'Space ID';
+
+  @override
+  String get copyGroupId => 'Copy ID';
+
+  @override
+  String get groupIdCopied => 'Space ID copied';
+
+  @override
+  String membersCount(int count) {
+    return 'Devices connected: $count';
+  }
+
+  @override
+  String get ownerDevice => 'This device is the owner';
+
+  @override
+  String get guestDevice => 'This device is a guest';
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncPulled => 'Local data updated from the cloud';
+
+  @override
+  String get syncPushed => 'Local data uploaded to the cloud';
+
+  @override
+  String get syncFailed => 'Synchronization failed';
+
+  @override
+  String get uploadLocalData => 'Upload this device\'s data';
+
+  @override
+  String get uploadLocalDataWarning =>
+      'Cloud data will be replaced by this device\'s catalog.';
+
+  @override
+  String get leaveSharedSpace => 'Leave shared space';
+
+  @override
+  String get leaveSharedSpaceQuestion => 'Leave the shared space?';
+
+  @override
+  String get leaveSharedSpaceWarning =>
+      'This device will stop syncing. Local data stays on the device.';
+
+  @override
+  String get joinSuccess => 'Connected to the shared space';
+
+  @override
+  String get joinNotFound => 'No shared space was found for this code.';
+
+  @override
+  String get joinFailed => 'Could not join the shared space.';
 
   @override
   String get premiumActive => 'Premium is active: no limits';

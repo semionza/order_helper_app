@@ -3,16 +3,49 @@ import '../app_config.dart';
 import '../l10n/app_locale_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../services/purchase_service.dart';
+import '../services/supabase_service.dart';
 import '../services/usage_service.dart';
 import '../widgets/paywall.dart';
+import 'family_sync_screen.dart';
 import 'rooms_screen.dart';
 import 'cleanup_screen.dart';
 import 'search_screen.dart';
 import 'room_cleanup_result_screen.dart';
 import 'cleanup_history_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isSyncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startupSync());
+  }
+
+  /// Фоновая синхронизация при запуске: списки обновятся сами через watch() в Isar.
+  Future<void> _startupSync() async {
+    if (await SupabaseService.instance.currentGroupId() == null) return;
+    if (!mounted) return;
+
+    setState(() => _isSyncing = true);
+    final outcome = await SupabaseService.instance.autoSync();
+    if (!mounted) return;
+    setState(() => _isSyncing = false);
+
+    if (outcome == SyncOutcome.pulled) {
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.syncPulled)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +87,11 @@ class HomeScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (_isSyncing)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(),
+            ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.inventory, color: Colors.blue, size: 32),
@@ -107,6 +145,21 @@ class HomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => CleanupHistoryScreen()),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.family_restroom, color: Colors.purple, size: 32),
+              title: Text(l10n.familySyncTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              subtitle: Text(l10n.familySyncSubtitle),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const FamilySyncScreen()),
                 );
               },
             ),

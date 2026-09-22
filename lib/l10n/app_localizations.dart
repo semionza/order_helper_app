@@ -802,6 +802,18 @@ abstract class AppLocalizations {
   /// **'The free plan includes {limit} AI analyses per month. Upgrade to Premium for unlimited analyses.'**
   String premiumLimitScansReached(int limit);
 
+  /// No description provided for @premiumLimitDevicesReached.
+  ///
+  /// In en, this message translates to:
+  /// **'The free plan supports {limit} devices in a family group. Upgrade to Premium to connect more.'**
+  String premiumLimitDevicesReached(int limit);
+
+  /// No description provided for @premiumBenefitFamilySync.
+  ///
+  /// In en, this message translates to:
+  /// **'Family sync across unlimited devices'**
+  String get premiumBenefitFamilySync;
+
   /// No description provided for @premiumRestore.
   ///
   /// In en, this message translates to:
@@ -849,6 +861,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Premium'**
   String get premiumHomeTitle;
+
+  /// No description provided for @familySyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Family sync'**
+  String get familySyncTitle;
+
+  /// No description provided for @familySyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your catalog with another device'**
+  String get familySyncSubtitle;
+
+  /// No description provided for @familySyncNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'This device is not connected to a shared space yet.'**
+  String get familySyncNotConnected;
+
+  /// No description provided for @createSharedSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Create shared space'**
+  String get createSharedSpace;
+
+  /// No description provided for @joinSharedSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Join by QR code'**
+  String get joinSharedSpace;
+
+  /// No description provided for @sharedSpaceCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared space created'**
+  String get sharedSpaceCreated;
+
+  /// No description provided for @sharedSpaceCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The shared space could not be created.'**
+  String get sharedSpaceCreateFailed;
+
+  /// No description provided for @scanQrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the invitation code'**
+  String get scanQrTitle;
+
+  /// No description provided for @scanQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the QR code on the host device'**
+  String get scanQrHint;
+
+  /// No description provided for @invitationQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan this code on the second device to join'**
+  String get invitationQrHint;
+
+  /// No description provided for @groupIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Space ID'**
+  String get groupIdLabel;
+
+  /// No description provided for @copyGroupId.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy ID'**
+  String get copyGroupId;
+
+  /// No description provided for @groupIdCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Space ID copied'**
+  String get groupIdCopied;
+
+  /// No description provided for @membersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices connected: {count}'**
+  String membersCount(int count);
+
+  /// No description provided for @ownerDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device is the owner'**
+  String get ownerDevice;
+
+  /// No description provided for @guestDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device is a guest'**
+  String get guestDevice;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncPulled.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data updated from the cloud'**
+  String get syncPulled;
+
+  /// No description provided for @syncPushed.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data uploaded to the cloud'**
+  String get syncPushed;
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization failed'**
+  String get syncFailed;
+
+  /// No description provided for @uploadLocalData.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload this device\'s data'**
+  String get uploadLocalData;
+
+  /// No description provided for @uploadLocalDataWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud data will be replaced by this device\'s catalog.'**
+  String get uploadLocalDataWarning;
+
+  /// No description provided for @leaveSharedSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave shared space'**
+  String get leaveSharedSpace;
+
+  /// No description provided for @leaveSharedSpaceQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave the shared space?'**
+  String get leaveSharedSpaceQuestion;
+
+  /// No description provided for @leaveSharedSpaceWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This device will stop syncing. Local data stays on the device.'**
+  String get leaveSharedSpaceWarning;
+
+  /// No description provided for @joinSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to the shared space'**
+  String get joinSuccess;
+
+  /// No description provided for @joinNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No shared space was found for this code.'**
+  String get joinNotFound;
+
+  /// No description provided for @joinFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not join the shared space.'**
+  String get joinFailed;
 
   /// No description provided for @premiumActive.
   ///

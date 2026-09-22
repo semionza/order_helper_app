@@ -4,6 +4,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import '../app_config.dart';
 import '../l10n/app_localizations.dart';
 import '../services/purchase_service.dart';
+import '../services/supabase_service.dart';
 import '../services/usage_service.dart';
 
 /// Показывает предложение оформить Premium. Возвращает true, если премиум активирован.
@@ -38,6 +39,41 @@ Future<bool> ensureAiScanQuota(BuildContext context) async {
     context,
     reason: l10n.premiumLimitScansReached(AppConfig.maxFreeAiScansPerMonth),
   );
+}
+
+/// Проверяет лимит устройств семейной группы; при превышении показывает paywall.
+Future<bool> ensureGroupDeviceQuota(
+  BuildContext context,
+  String groupId,
+) async {
+  if (await SupabaseService.instance.canRegisterDevice(groupId)) return true;
+  if (!context.mounted) return false;
+  final l10n = AppLocalizations.of(context);
+  return showPaywall(
+    context,
+    reason: l10n.premiumLimitDevicesReached(AppConfig.maxFreeGroupDevices),
+  );
+}
+
+/// Подключает устройство к группе; при отказе по лимиту (в том числе от
+/// серверного триггера) показывает paywall и повторяет попытку после покупки.
+Future<JoinGroupResult> joinGroupWithPaywall(
+  BuildContext context,
+  String groupId,
+) async {
+  var result = await SupabaseService.instance.joinGroup(groupId);
+  if (result != JoinGroupResult.limitReached) return result;
+  if (!context.mounted) return result;
+
+  final l10n = AppLocalizations.of(context);
+  final upgraded = await showPaywall(
+    context,
+    reason: l10n.premiumLimitDevicesReached(AppConfig.maxFreeGroupDevices),
+  );
+  if (upgraded) {
+    result = await SupabaseService.instance.joinGroup(groupId);
+  }
+  return result;
 }
 
 class _PaywallSheet extends StatefulWidget {
@@ -144,6 +180,7 @@ class _PaywallSheetState extends State<_PaywallSheet> {
               const SizedBox(height: 12),
               _benefit(l10n.premiumBenefitUnlimitedItems),
               _benefit(l10n.premiumBenefitUnlimitedScans),
+              _benefit(l10n.premiumBenefitFamilySync),
               _benefit(l10n.premiumBenefitSupport),
               const SizedBox(height: 16),
               ValueListenableBuilder<bool>(

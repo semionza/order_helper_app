@@ -419,6 +419,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String premiumLimitDevicesReached(int limit) {
+    return 'В бесплатной версии к семейной группе можно подключить $limit устройства. Оформите Premium, чтобы добавить больше.';
+  }
+
+  @override
+  String get premiumBenefitFamilySync =>
+      'Семейная синхронизация без ограничения по устройствам';
+
+  @override
   String get premiumRestore => 'Восстановить покупки';
 
   @override
@@ -441,6 +450,96 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get premiumHomeTitle => 'Premium';
+
+  @override
+  String get familySyncTitle => 'Семейная синхронизация';
+
+  @override
+  String get familySyncSubtitle => 'Общий каталог с другим устройством';
+
+  @override
+  String get familySyncNotConnected =>
+      'Это устройство ещё не подключено к общему пространству.';
+
+  @override
+  String get createSharedSpace => 'Создать общее пространство';
+
+  @override
+  String get joinSharedSpace => 'Подключиться по QR-коду';
+
+  @override
+  String get sharedSpaceCreated => 'Общее пространство создано';
+
+  @override
+  String get sharedSpaceCreateFailed =>
+      'Не удалось создать общее пространство.';
+
+  @override
+  String get scanQrTitle => 'Сканирование кода приглашения';
+
+  @override
+  String get scanQrHint => 'Наведите камеру на QR-код на устройстве-хосте';
+
+  @override
+  String get invitationQrHint => 'Отсканируйте этот код на втором устройстве';
+
+  @override
+  String get groupIdLabel => 'ID пространства';
+
+  @override
+  String get copyGroupId => 'Скопировать ID';
+
+  @override
+  String get groupIdCopied => 'ID скопирован';
+
+  @override
+  String membersCount(int count) {
+    return 'Подключено устройств: $count';
+  }
+
+  @override
+  String get ownerDevice => 'Это устройство — владелец';
+
+  @override
+  String get guestDevice => 'Это устройство — гость';
+
+  @override
+  String get syncNow => 'Синхронизировать';
+
+  @override
+  String get syncPulled => 'Локальные данные обновлены из облака';
+
+  @override
+  String get syncPushed => 'Локальные данные выгружены в облако';
+
+  @override
+  String get syncFailed => 'Не удалось синхронизировать';
+
+  @override
+  String get uploadLocalData => 'Выгрузить данные этого устройства';
+
+  @override
+  String get uploadLocalDataWarning =>
+      'Данные в облаке будут заменены каталогом этого устройства.';
+
+  @override
+  String get leaveSharedSpace => 'Покинуть пространство';
+
+  @override
+  String get leaveSharedSpaceQuestion => 'Покинуть общее пространство?';
+
+  @override
+  String get leaveSharedSpaceWarning =>
+      'Устройство перестанет синхронизироваться. Локальные данные останутся на устройстве.';
+
+  @override
+  String get joinSuccess => 'Подключено к общему пространству';
+
+  @override
+  String get joinNotFound => 'Пространство по этому коду не найдено.';
+
+  @override
+  String get joinFailed => 'Не удалось подключиться к пространству.';
 
   @override
   String get premiumActive => 'Premium активен: без ограничений';

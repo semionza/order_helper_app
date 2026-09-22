@@ -409,6 +409,14 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
+  String premiumLimitDevicesReached(int limit) {
+    return 'בגרסה החינמית ניתן לחבר $limit מכשירים לקבוצת משפחה. שדרגו ל-Premium כדי לחבר עוד.';
+  }
+
+  @override
+  String get premiumBenefitFamilySync => 'סנכרון משפחתי ללא הגבלת מכשירים';
+
+  @override
   String get premiumRestore => 'שחזור רכישות';
 
   @override
@@ -431,6 +439,94 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get premiumHomeTitle => 'Premium';
+
+  @override
+  String get familySyncTitle => 'סנכרון משפחתי';
+
+  @override
+  String get familySyncSubtitle => 'שיתוף הקטלוג עם מכשיר נוסף';
+
+  @override
+  String get familySyncNotConnected => 'המכשיר הזה עדיין לא מחובר למרחב משותף.';
+
+  @override
+  String get createSharedSpace => 'יצירת מרחב משותף';
+
+  @override
+  String get joinSharedSpace => 'הצטרפות עם קוד QR';
+
+  @override
+  String get sharedSpaceCreated => 'המרחב המשותף נוצר';
+
+  @override
+  String get sharedSpaceCreateFailed => 'לא ניתן ליצור מרחב משותף.';
+
+  @override
+  String get scanQrTitle => 'סריקת קוד ההזמנה';
+
+  @override
+  String get scanQrHint => 'כוונו את המצלמה לקוד ה-QR במכשיר המארח';
+
+  @override
+  String get invitationQrHint => 'סרקו קוד זה במכשיר השני כדי להצטרף';
+
+  @override
+  String get groupIdLabel => 'מזהה המרחב';
+
+  @override
+  String get copyGroupId => 'העתקת מזהה';
+
+  @override
+  String get groupIdCopied => 'המזהה הועתק';
+
+  @override
+  String membersCount(int count) {
+    return 'מכשירים מחוברים: $count';
+  }
+
+  @override
+  String get ownerDevice => 'המכשיר הזה הוא הבעלים';
+
+  @override
+  String get guestDevice => 'המכשיר הזה הוא אורח';
+
+  @override
+  String get syncNow => 'סנכרון עכשיו';
+
+  @override
+  String get syncPulled => 'הנתונים המקומיים עודכנו מהענן';
+
+  @override
+  String get syncPushed => 'הנתונים המקומיים הועלו לענן';
+
+  @override
+  String get syncFailed => 'הסנכרון נכשל';
+
+  @override
+  String get uploadLocalData => 'העלאת הנתונים מהמכשיר הזה';
+
+  @override
+  String get uploadLocalDataWarning =>
+      'הנתונים בענן יוחלפו בקטלוג של המכשיר הזה.';
+
+  @override
+  String get leaveSharedSpace => 'עזיבת המרחב המשותף';
+
+  @override
+  String get leaveSharedSpaceQuestion => 'לעזוב את המרחב המשותף?';
+
+  @override
+  String get leaveSharedSpaceWarning =>
+      'המכשיר יפסיק להתסנכרן. הנתונים המקומיים יישארו במכשיר.';
+
+  @override
+  String get joinSuccess => 'החיבור למרחב המשותף בוצע';
+
+  @override
+  String get joinNotFound => 'לא נמצא מרחב עבור קוד זה.';
+
+  @override
+  String get joinFailed => 'לא ניתן להצטרף למרחב המשותף.';
 
   @override
   String get premiumActive => 'Premium פעיל: ללא מגבלות';

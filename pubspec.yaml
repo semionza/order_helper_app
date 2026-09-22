@@ -59,6 +59,13 @@ dependencies:
   # Встроенные покупки (Premium)
   in_app_purchase: ^3.2.0
 
+  # Облачная синхронизация семейных групп
+  supabase_flutter: ^2.8.0
+
+  # QR-код для приглашения в семейное пространство
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.2.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
