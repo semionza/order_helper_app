@@ -382,4 +382,61 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get addItemPlaceholder => 'טופס הוספת הפריט יופיע כאן';
+
+  @override
+  String get premiumTitle => 'Order Guide Premium';
+
+  @override
+  String get premiumSubtitle => 'הסרת המגבלות של הגרסה החינמית';
+
+  @override
+  String get premiumBenefitUnlimitedItems => 'פריטים ללא הגבלה בקטלוג';
+
+  @override
+  String get premiumBenefitUnlimitedScans => 'ניתוחי AI ללא הגבלה';
+
+  @override
+  String get premiumBenefitSupport => 'תמיכה בפיתוח המשך של האפליקציה';
+
+  @override
+  String premiumLimitItemsReached(int limit) {
+    return 'בגרסה החינמית ניתן לשמור $limit פריטים. שדרגו ל-Premium כדי להמשיך להוסיף.';
+  }
+
+  @override
+  String premiumLimitScansReached(int limit) {
+    return 'הגרסה החינמית כוללת $limit ניתוחי AI בחודש. שדרגו ל-Premium לשימוש ללא הגבלה.';
+  }
+
+  @override
+  String get premiumRestore => 'שחזור רכישות';
+
+  @override
+  String get premiumMaybeLater => 'אולי מאוחר יותר';
+
+  @override
+  String get premiumRetry => 'נסו שוב';
+
+  @override
+  String get premiumStoreUnavailable => 'החנות אינה זמינה כרגע.';
+
+  @override
+  String get premiumPurchaseFailed => 'לא ניתן להתחיל את הרכישה.';
+
+  @override
+  String get premiumPurchaseSuccess => 'Premium פעיל. תודה!';
+
+  @override
+  String get premiumRestoreNoPurchases => 'לא נמצאו רכישות קודמות.';
+
+  @override
+  String get premiumHomeTitle => 'Premium';
+
+  @override
+  String get premiumActive => 'Premium פעיל: ללא מגבלות';
+
+  @override
+  String premiumUsageSummary(int items, int maxItems, int scans, int maxScans) {
+    return 'חינם: $items/$maxItems פריטים, $scans/$maxScans ניתוחי AI החודש';
+  }
 }

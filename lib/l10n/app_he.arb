@@ -109,5 +109,22 @@
   "recommendSimilarLocation": "דומה ל״{itemName}״: יש לשים ב-{location}",
   "recommendUnassigned": "אין המלצה; יש לשים תחת ללא מיקום",
   "addItemTitle": "הוספת פריט",
-  "addItemPlaceholder": "טופס הוספת הפריט יופיע כאן"
+  "addItemPlaceholder": "טופס הוספת הפריט יופיע כאן",
+  "premiumTitle": "Order Guide Premium",
+  "premiumSubtitle": "הסרת המגבלות של הגרסה החינמית",
+  "premiumBenefitUnlimitedItems": "פריטים ללא הגבלה בקטלוג",
+  "premiumBenefitUnlimitedScans": "ניתוחי AI ללא הגבלה",
+  "premiumBenefitSupport": "תמיכה בפיתוח המשך של האפליקציה",
+  "premiumLimitItemsReached": "בגרסה החינמית ניתן לשמור {limit} פריטים. שדרגו ל-Premium כדי להמשיך להוסיף.",
+  "premiumLimitScansReached": "הגרסה החינמית כוללת {limit} ניתוחי AI בחודש. שדרגו ל-Premium לשימוש ללא הגבלה.",
+  "premiumRestore": "שחזור רכישות",
+  "premiumMaybeLater": "אולי מאוחר יותר",
+  "premiumRetry": "נסו שוב",
+  "premiumStoreUnavailable": "החנות אינה זמינה כרגע.",
+  "premiumPurchaseFailed": "לא ניתן להתחיל את הרכישה.",
+  "premiumPurchaseSuccess": "Premium פעיל. תודה!",
+  "premiumRestoreNoPurchases": "לא נמצאו רכישות קודמות.",
+  "premiumHomeTitle": "Premium",
+  "premiumActive": "Premium פעיל: ללא מגבלות",
+  "premiumUsageSummary": "חינם: {items}/{maxItems} פריטים, {scans}/{maxScans} ניתוחי AI החודש"
 }

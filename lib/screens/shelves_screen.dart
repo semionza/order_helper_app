@@ -7,6 +7,8 @@ import '../models/storage_unit.dart';
 import '../models/shelf.dart';
 import '../models/item.dart';
 import '../services/gemini_service.dart';
+import '../services/usage_service.dart';
+import '../widgets/paywall.dart';
 import 'cleanup_screen.dart';
 import 'items_screen.dart';
 import 'add_existing_items_screen.dart';
@@ -146,6 +148,9 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
     if (shelf.photoPath == null) return;
     final l10n = AppLocalizations.of(context);
 
+    if (!await ensureAiScanQuota(context)) return;
+    if (!mounted) return;
+
     setState(() {
       _isAnalyzing[shelf.id] = true;
     });
@@ -155,8 +160,14 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
         shelf.photoPath!,
         languageCode: Localizations.localeOf(context).languageCode,
       );
+      await UsageService.registerAiScan();
 
       if (detectedItems.isNotEmpty) {
+        if (!mounted) return;
+        if (!await ensureItemQuota(context, count: detectedItems.length)) {
+          return;
+        }
+
         await isar.writeTxn(() async {
           for (var itemMap in detectedItems) {
             final newItem = Item()

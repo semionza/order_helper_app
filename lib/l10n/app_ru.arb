@@ -109,5 +109,22 @@
   "recommendSimilarLocation": "Похоже на «{itemName}»: положите в {location}",
   "recommendUnassigned": "Нет рекомендаций, положите в категорию «Без места»",
   "addItemTitle": "Добавить предмет",
-  "addItemPlaceholder": "Здесь будет форма для добавления нового предмета"
+  "addItemPlaceholder": "Здесь будет форма для добавления нового предмета",
+  "premiumTitle": "Order Guide Premium",
+  "premiumSubtitle": "Снимите ограничения бесплатной версии",
+  "premiumBenefitUnlimitedItems": "Неограниченное количество вещей в каталоге",
+  "premiumBenefitUnlimitedScans": "Неограниченные AI-анализы фотографий",
+  "premiumBenefitSupport": "Поддержка дальнейшей разработки приложения",
+  "premiumLimitItemsReached": "В бесплатной версии можно хранить {limit} вещей. Оформите Premium, чтобы добавлять дальше.",
+  "premiumLimitScansReached": "В бесплатной версии доступно {limit} AI-анализов в месяц. Оформите Premium для безлимита.",
+  "premiumRestore": "Восстановить покупки",
+  "premiumMaybeLater": "Может быть позже",
+  "premiumRetry": "Повторить",
+  "premiumStoreUnavailable": "Магазин сейчас недоступен.",
+  "premiumPurchaseFailed": "Не удалось начать покупку.",
+  "premiumPurchaseSuccess": "Premium активирован. Спасибо!",
+  "premiumRestoreNoPurchases": "Предыдущие покупки не найдены.",
+  "premiumHomeTitle": "Premium",
+  "premiumActive": "Premium активен: без ограничений",
+  "premiumUsageSummary": "Бесплатно: {items}/{maxItems} вещей, {scans}/{maxScans} AI-анализов в этом месяце"
 }

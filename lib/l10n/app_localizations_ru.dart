@@ -389,4 +389,64 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get addItemPlaceholder =>
       'Здесь будет форма для добавления нового предмета';
+
+  @override
+  String get premiumTitle => 'Order Guide Premium';
+
+  @override
+  String get premiumSubtitle => 'Снимите ограничения бесплатной версии';
+
+  @override
+  String get premiumBenefitUnlimitedItems =>
+      'Неограниченное количество вещей в каталоге';
+
+  @override
+  String get premiumBenefitUnlimitedScans =>
+      'Неограниченные AI-анализы фотографий';
+
+  @override
+  String get premiumBenefitSupport =>
+      'Поддержка дальнейшей разработки приложения';
+
+  @override
+  String premiumLimitItemsReached(int limit) {
+    return 'В бесплатной версии можно хранить $limit вещей. Оформите Premium, чтобы добавлять дальше.';
+  }
+
+  @override
+  String premiumLimitScansReached(int limit) {
+    return 'В бесплатной версии доступно $limit AI-анализов в месяц. Оформите Premium для безлимита.';
+  }
+
+  @override
+  String get premiumRestore => 'Восстановить покупки';
+
+  @override
+  String get premiumMaybeLater => 'Может быть позже';
+
+  @override
+  String get premiumRetry => 'Повторить';
+
+  @override
+  String get premiumStoreUnavailable => 'Магазин сейчас недоступен.';
+
+  @override
+  String get premiumPurchaseFailed => 'Не удалось начать покупку.';
+
+  @override
+  String get premiumPurchaseSuccess => 'Premium активирован. Спасибо!';
+
+  @override
+  String get premiumRestoreNoPurchases => 'Предыдущие покупки не найдены.';
+
+  @override
+  String get premiumHomeTitle => 'Premium';
+
+  @override
+  String get premiumActive => 'Premium активен: без ограничений';
+
+  @override
+  String premiumUsageSummary(int items, int maxItems, int scans, int maxScans) {
+    return 'Бесплатно: $items/$maxItems вещей, $scans/$maxScans AI-анализов в этом месяце';
+  }
 }

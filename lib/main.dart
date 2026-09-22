@@ -9,7 +9,9 @@ import 'models/storage_unit.dart';
 import 'models/shelf.dart';
 import 'models/item.dart';
 import 'models/room_cleanup_session.dart';
+import 'models/usage_stats.dart';
 import 'screens/home_screen.dart';
+import 'services/purchase_service.dart';
 
 // Глобальная переменная для доступа к базе данных из любого места
 late Isar isar;
@@ -24,9 +26,18 @@ void main() async {
 
   // Открываем или создаем базу данных Isar со всеми нашими моделями
   isar = await Isar.open(
-    [RoomSchema, StorageUnitSchema, ShelfSchema, ItemSchema, RoomCleanupSessionSchema],
+    [
+      RoomSchema,
+      StorageUnitSchema,
+      ShelfSchema,
+      ItemSchema,
+      RoomCleanupSessionSchema,
+      UsageStatsSchema,
+    ],
     directory: dir.path,
   );
+
+  await PurchaseService.instance.init();
 
   runApp(const OrderHelperApp());
 }

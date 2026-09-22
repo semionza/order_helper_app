@@ -759,6 +759,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The new item form will appear here'**
   String get addItemPlaceholder;
+
+  /// No description provided for @premiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Guide Premium'**
+  String get premiumTitle;
+
+  /// No description provided for @premiumSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the limits of the free plan'**
+  String get premiumSubtitle;
+
+  /// No description provided for @premiumBenefitUnlimitedItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited items in the catalog'**
+  String get premiumBenefitUnlimitedItems;
+
+  /// No description provided for @premiumBenefitUnlimitedScans.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited AI photo analyses'**
+  String get premiumBenefitUnlimitedScans;
+
+  /// No description provided for @premiumBenefitSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Support further development of the app'**
+  String get premiumBenefitSupport;
+
+  /// No description provided for @premiumLimitItemsReached.
+  ///
+  /// In en, this message translates to:
+  /// **'The free plan is limited to {limit} items. Upgrade to Premium to keep adding.'**
+  String premiumLimitItemsReached(int limit);
+
+  /// No description provided for @premiumLimitScansReached.
+  ///
+  /// In en, this message translates to:
+  /// **'The free plan includes {limit} AI analyses per month. Upgrade to Premium for unlimited analyses.'**
+  String premiumLimitScansReached(int limit);
+
+  /// No description provided for @premiumRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get premiumRestore;
+
+  /// No description provided for @premiumMaybeLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Maybe later'**
+  String get premiumMaybeLater;
+
+  /// No description provided for @premiumRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get premiumRetry;
+
+  /// No description provided for @premiumStoreUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The store is unavailable right now.'**
+  String get premiumStoreUnavailable;
+
+  /// No description provided for @premiumPurchaseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The purchase could not be started.'**
+  String get premiumPurchaseFailed;
+
+  /// No description provided for @premiumPurchaseSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium is active. Thank you!'**
+  String get premiumPurchaseSuccess;
+
+  /// No description provided for @premiumRestoreNoPurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous purchases were found.'**
+  String get premiumRestoreNoPurchases;
+
+  /// No description provided for @premiumHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get premiumHomeTitle;
+
+  /// No description provided for @premiumActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium is active: no limits'**
+  String get premiumActive;
+
+  /// No description provided for @premiumUsageSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Free plan: {items}/{maxItems} items, {scans}/{maxScans} AI analyses this month'**
+  String premiumUsageSummary(int items, int maxItems, int scans, int maxScans);
 }
 
 class _AppLocalizationsDelegate

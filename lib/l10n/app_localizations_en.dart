@@ -387,4 +387,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addItemPlaceholder => 'The new item form will appear here';
+
+  @override
+  String get premiumTitle => 'Order Guide Premium';
+
+  @override
+  String get premiumSubtitle => 'Remove the limits of the free plan';
+
+  @override
+  String get premiumBenefitUnlimitedItems => 'Unlimited items in the catalog';
+
+  @override
+  String get premiumBenefitUnlimitedScans => 'Unlimited AI photo analyses';
+
+  @override
+  String get premiumBenefitSupport => 'Support further development of the app';
+
+  @override
+  String premiumLimitItemsReached(int limit) {
+    return 'The free plan is limited to $limit items. Upgrade to Premium to keep adding.';
+  }
+
+  @override
+  String premiumLimitScansReached(int limit) {
+    return 'The free plan includes $limit AI analyses per month. Upgrade to Premium for unlimited analyses.';
+  }
+
+  @override
+  String get premiumRestore => 'Restore purchases';
+
+  @override
+  String get premiumMaybeLater => 'Maybe later';
+
+  @override
+  String get premiumRetry => 'Try again';
+
+  @override
+  String get premiumStoreUnavailable => 'The store is unavailable right now.';
+
+  @override
+  String get premiumPurchaseFailed => 'The purchase could not be started.';
+
+  @override
+  String get premiumPurchaseSuccess => 'Premium is active. Thank you!';
+
+  @override
+  String get premiumRestoreNoPurchases => 'No previous purchases were found.';
+
+  @override
+  String get premiumHomeTitle => 'Premium';
+
+  @override
+  String get premiumActive => 'Premium is active: no limits';
+
+  @override
+  String premiumUsageSummary(int items, int maxItems, int scans, int maxScans) {
+    return 'Free plan: $items/$maxItems items, $scans/$maxScans AI analyses this month';
+  }
 }

@@ -11,6 +11,7 @@ import '../models/shelf.dart';
 import '../models/item.dart';
 import '../models/storage_unit.dart';
 import '../models/room.dart';
+import '../widgets/paywall.dart';
 import 'cleanup_screen.dart';
 
 class ItemsScreen extends StatefulWidget {
@@ -275,6 +276,9 @@ class _ItemsScreenState extends State<ItemsScreen> {
                         : <String>[];
 
                     if (name.isNotEmpty) {
+                      if (!isEditing && !await ensureItemQuota(context)) {
+                        return;
+                      }
                       await isar.writeTxn(() async {
                         if (isEditing) {
                           itemToEdit
@@ -354,15 +358,57 @@ class _ItemsScreenState extends State<ItemsScreen> {
                 color: Colors.orange,
               ),
               title: Text(l10n.removeItem),
+              subtitle: Text(l10n.removeItemFromShelf),
               onTap: () async {
                 Navigator.pop(dialogContext);
                 await _removeItemFromShelf(item);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              title: Text(l10n.deleteItemPermanently),
+              subtitle: Text(l10n.deleteItemPermanentlyWarning),
+              onTap: () {
+                Navigator.pop(dialogContext);
+                _confirmDeleteItemPermanently(context, item);
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _confirmDeleteItemPermanently(BuildContext context, Item item) {
+    final l10n = AppLocalizations.of(context);
+
+    showDialog(
+      context: context,
+      builder: (confirmContext) => AlertDialog(
+        title: Text(l10n.deleteItemPermanentlyQuestion),
+        content: Text(l10n.deleteItemPermanentlyWarning),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(confirmContext),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(confirmContext);
+              await _deleteItemPermanently(item);
+            },
+            child: Text(l10n.deleteItemPermanently),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteItemPermanently(Item item) async {
+    await isar.writeTxn(() async {
+      await isar.items.delete(item.id);
+    });
   }
 
   Future<void> _removeItemFromShelf(Item item) async {

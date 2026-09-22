@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import '../app_config.dart';
 import '../l10n/app_locale_controller.dart';
 import '../l10n/app_localizations.dart';
+import '../services/purchase_service.dart';
+import '../services/usage_service.dart';
+import '../widgets/paywall.dart';
 import 'rooms_screen.dart';
 import 'cleanup_screen.dart';
 import 'search_screen.dart';
@@ -107,8 +111,78 @@ class HomeScreen extends StatelessWidget {
               },
             ),
           ),
+          const SizedBox(height: 12),
+          const _PremiumCard(),
         ],
       ),
+    );
+  }
+}
+
+class _PremiumCard extends StatefulWidget {
+  const _PremiumCard();
+
+  @override
+  State<_PremiumCard> createState() => _PremiumCardState();
+}
+
+class _PremiumCardState extends State<_PremiumCard> {
+  Future<List<int>> _loadUsage() async => [
+    await UsageService.itemsCount(),
+    await UsageService.aiScansUsedThisMonth(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: PurchaseService.instance.isPremium,
+      builder: (context, isPremium, _) {
+        return Card(
+          child: FutureBuilder<List<int>>(
+            future: isPremium ? null : _loadUsage(),
+            builder: (context, snapshot) {
+              final usage = snapshot.data;
+              final subtitle = isPremium
+                  ? l10n.premiumActive
+                  : usage == null
+                  ? l10n.premiumSubtitle
+                  : l10n.premiumUsageSummary(
+                      usage[0],
+                      AppConfig.maxFreeItems,
+                      usage[1],
+                      AppConfig.maxFreeAiScansPerMonth,
+                    );
+
+              return ListTile(
+                leading: Icon(
+                  isPremium ? Icons.workspace_premium : Icons.lock_open,
+                  color: Colors.amber,
+                  size: 32,
+                ),
+                title: Text(
+                  l10n.premiumHomeTitle,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(subtitle),
+                trailing: isPremium
+                    ? null
+                    : const Icon(Icons.arrow_forward_ios),
+                onTap: isPremium
+                    ? null
+                    : () async {
+                        await showPaywall(context);
+                        if (mounted) setState(() {});
+                      },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

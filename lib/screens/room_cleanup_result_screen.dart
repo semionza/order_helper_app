@@ -10,7 +10,9 @@ import '../models/room.dart';
 import '../models/room_cleanup_session.dart';
 import '../services/gemini_service.dart';
 import '../services/matching_service.dart';
+import '../services/usage_service.dart';
 import '../widgets/edit_item_form_dialog.dart';
+import '../widgets/paywall.dart';
 
 class RoomCleanupResultScreen extends StatefulWidget {
   final String? photoPath;
@@ -45,10 +47,22 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
     } else if (widget.photoPath == null) {
       session = await isar.roomCleanupSessions.where().sortByCreatedAtDesc().findFirst();
     } else {
+      if (!await ensureAiScanQuota(context)) {
+        if (!mounted) return;
+        setState(() {
+          _activeSession = null;
+          _isLoading = false;
+        });
+        Navigator.of(context).maybePop();
+        return;
+      }
+
+      if (!mounted) return;
       final results = await GeminiService.analyzeRoomCleanupPhoto(
         widget.photoPath!,
         languageCode: Localizations.localeOf(context).languageCode,
       );
+      await UsageService.registerAiScan();
       final List<DetectedItemData> detectedList = [];
 
       for (var itemMap in results) {
@@ -312,7 +326,12 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                                             subtitle: Text(l10n.saveAndRemove),
                                             onTap: () async {
                                               Navigator.pop(context);
-                                              
+
+                                              if (itemData.matchedIsarItemId == null &&
+                                                  !await ensureItemQuota(this.context)) {
+                                                return;
+                                              }
+
                                               // Сохраняем вещь в базу (логика аналогична кнопке "Положить на место")
                                               await isar.writeTxn(() async {
                                                 if (itemData.matchedIsarItemId != null) {
@@ -487,8 +506,15 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                     return;
                   }
 
+                  final newItemsCount = checkedItems
+                      .where((e) => e.matchedIsarItemId == null)
+                      .length;
+                  if (newItemsCount > 0 &&
+                      !await ensureItemQuota(context, count: newItemsCount)) {
+                    return;
+                  }
+
                   await isar.writeTxn(() async {
-                    // 1. Сохраняем/обновляем убранные вещи в базе
                     for (var itemData in checkedItems) {
                       if (itemData.matchedIsarItemId != null) {
                         final matched = await isar.items.get(itemData.matchedIsarItemId!);

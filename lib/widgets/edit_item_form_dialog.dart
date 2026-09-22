@@ -10,6 +10,7 @@ import '../models/item.dart';
 import '../models/storage_unit.dart';
 import '../models/room.dart';
 import '../screens/cleanup_screen.dart';
+import 'paywall.dart';
 
 Future<void> showEditItemFormDialog({
   required BuildContext context,
@@ -17,6 +18,7 @@ Future<void> showEditItemFormDialog({
   required VoidCallback onSaved,
 }) async {
   final l10n = AppLocalizations.of(context);
+  final isNewItem = item.id == Isar.autoIncrement;
   int speechLocaleIndex = speechLocaleIndexFor(context);
   final nameController = TextEditingController(text: item.name);
   final quantityController = TextEditingController(text: item.quantity.toString());
@@ -221,6 +223,9 @@ Future<void> showEditItemFormDialog({
                       : <String>[];
 
                   if (name.isNotEmpty) {
+                    if (isNewItem && !await ensureItemQuota(context)) {
+                      return;
+                    }
                     await isar.writeTxn(() async {
                       item
                         ..name = name
