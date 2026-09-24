@@ -195,10 +195,14 @@ class _FamilySyncScreenState extends State<FamilySyncScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            QrImageView(
-              data: groupId,
-              size: 220,
-              backgroundColor: Colors.white,
+            SizedBox(
+              width: 220,
+              height: 220,
+              child: QrImageView(
+                data: groupId,
+                size: 220,
+                backgroundColor: Colors.white,
+              ),
             ),
             const SizedBox(height: 12),
             Text(l10n.invitationQrHint, textAlign: TextAlign.center),
