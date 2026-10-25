@@ -10,7 +10,7 @@ class AppLocalizationsHe extends AppLocalizations {
   AppLocalizationsHe([String locale = 'he']) : super(locale);
 
   @override
-  String get appTitle => 'מדריך לסדר';
+  String get appTitle => 'WhereIsThat: Smart Organizer';
 
   @override
   String get changeLanguage => 'החלפת שפה';

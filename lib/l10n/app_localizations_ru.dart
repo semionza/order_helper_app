@@ -10,7 +10,7 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appTitle => 'Гид по порядку';
+  String get appTitle => 'WhereIsThat: Smart Organizer';
 
   @override
   String get changeLanguage => 'Сменить язык';
