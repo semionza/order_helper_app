@@ -11,7 +11,6 @@ import '../models/shelf.dart';
 import '../models/item.dart';
 import '../models/storage_unit.dart';
 import '../models/room.dart';
-import '../widgets/paywall.dart';
 import 'cleanup_screen.dart';
 
 class ItemsScreen extends StatefulWidget {
@@ -276,9 +275,6 @@ class _ItemsScreenState extends State<ItemsScreen> {
                         : <String>[];
 
                     if (name.isNotEmpty) {
-                      if (!isEditing && !await ensureItemQuota(context)) {
-                        return;
-                      }
                       await isar.writeTxn(() async {
                         if (isEditing) {
                           itemToEdit

@@ -180,10 +180,7 @@ class _PremiumCard extends StatefulWidget {
 }
 
 class _PremiumCardState extends State<_PremiumCard> {
-  Future<List<int>> _loadUsage() async => [
-    await UsageService.itemsCount(),
-    await UsageService.aiScansUsedThisMonth(),
-  ];
+  Future<int> _loadUsage() => UsageService.aiScansUsedThisMonth();
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +190,7 @@ class _PremiumCardState extends State<_PremiumCard> {
       valueListenable: PurchaseService.instance.isPremium,
       builder: (context, isPremium, _) {
         return Card(
-          child: FutureBuilder<List<int>>(
+          child: FutureBuilder<int>(
             future: isPremium ? null : _loadUsage(),
             builder: (context, snapshot) {
               final usage = snapshot.data;
@@ -202,9 +199,7 @@ class _PremiumCardState extends State<_PremiumCard> {
                   : usage == null
                   ? l10n.premiumSubtitle
                   : l10n.premiumUsageSummary(
-                      usage[0],
-                      AppConfig.maxFreeItems,
-                      usage[1],
+                      usage,
                       AppConfig.maxFreeAiScansPerMonth,
                     );
 

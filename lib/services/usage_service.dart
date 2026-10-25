@@ -1,10 +1,9 @@
 import '../app_config.dart';
 import '../main.dart';
-import '../models/item.dart';
 import '../models/usage_stats.dart';
 import 'purchase_service.dart';
 
-/// Учёт лимитов бесплатной версии: количество вещей и AI-анализов за месяц.
+/// Учёт лимита бесплатных AI-анализов за месяц.
 class UsageService {
   UsageService._();
 
@@ -37,24 +36,6 @@ class UsageService {
       await isar.writeTxn(() async => isar.usageStats.put(stats!));
     }
     return stats;
-  }
-
-  // --- Вещи ---
-
-  static Future<int> itemsCount() => isar.items.count();
-
-  /// Сколько вещей ещё можно создать бесплатно (для премиума — максимум int).
-  static Future<int> remainingFreeItems() async {
-    if (isPremium) return AppConfig.maxFreeItems;
-    final used = await itemsCount();
-    final left = AppConfig.maxFreeItems - used;
-    return left < 0 ? 0 : left;
-  }
-
-  static Future<bool> canCreateItems({int count = 1}) async {
-    if (isPremium) return true;
-    final used = await itemsCount();
-    return used + count <= AppConfig.maxFreeItems;
   }
 
   // --- AI-анализы ---

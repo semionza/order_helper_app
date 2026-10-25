@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../app_config.dart';
 import '../l10n/app_localizations.dart';
 import '../services/supabase_service.dart';
-import '../widgets/paywall.dart';
 import 'qr_scanner_screen.dart';
 
 class FamilySyncScreen extends StatefulWidget {
@@ -88,7 +86,7 @@ class _FamilySyncScreenState extends State<FamilySyncScreen> {
     if (scanned == null || !mounted) return;
 
     await _run(() async {
-      final result = await joinGroupWithPaywall(context, scanned);
+      final result = await _service.joinGroup(scanned);
       switch (result) {
         case JoinGroupResult.success:
           await _service.autoSync();
@@ -97,11 +95,6 @@ class _FamilySyncScreenState extends State<FamilySyncScreen> {
           break;
         case JoinGroupResult.notFound:
           _snack(l10n.joinNotFound);
-          break;
-        case JoinGroupResult.limitReached:
-          _snack(
-            l10n.premiumLimitDevicesReached(AppConfig.maxFreeGroupDevices),
-          );
           break;
         case JoinGroupResult.error:
           _snack(l10n.joinFailed);

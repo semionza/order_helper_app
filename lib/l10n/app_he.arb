@@ -112,13 +112,9 @@
   "addItemPlaceholder": "טופס הוספת הפריט יופיע כאן",
   "premiumTitle": "Order Guide Premium",
   "premiumSubtitle": "הסרת המגבלות של הגרסה החינמית",
-  "premiumBenefitUnlimitedItems": "פריטים ללא הגבלה בקטלוג",
   "premiumBenefitUnlimitedScans": "ניתוחי AI ללא הגבלה",
   "premiumBenefitSupport": "תמיכה בפיתוח המשך של האפליקציה",
-  "premiumLimitItemsReached": "בגרסה החינמית ניתן לשמור {limit} פריטים. שדרגו ל-Premium כדי להמשיך להוסיף.",
   "premiumLimitScansReached": "הגרסה החינמית כוללת {limit} ניתוחי AI בחודש. שדרגו ל-Premium לשימוש ללא הגבלה.",
-  "premiumLimitDevicesReached": "בגרסה החינמית ניתן לחבר {limit} מכשירים לקבוצת משפחה. שדרגו ל-Premium כדי לחבר עוד.",
-  "premiumBenefitFamilySync": "סנכרון משפחתי ללא הגבלת מכשירים",
   "premiumRestore": "שחזור רכישות",
   "premiumMaybeLater": "אולי מאוחר יותר",
   "premiumRetry": "נסו שוב",
@@ -156,5 +152,5 @@
   "joinNotFound": "לא נמצא מרחב עבור קוד זה.",
   "joinFailed": "לא ניתן להצטרף למרחב המשותף.",
   "premiumActive": "Premium פעיל: ללא מגבלות",
-  "premiumUsageSummary": "חינם: {items}/{maxItems} פריטים, {scans}/{maxScans} ניתוחי AI החודש"
+  "premiumUsageSummary": "חינם: {scans}/{maxScans} ניתוחי AI החודש"
 }

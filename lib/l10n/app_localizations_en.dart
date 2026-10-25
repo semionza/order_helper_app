@@ -395,31 +395,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumSubtitle => 'Remove the limits of the free plan';
 
   @override
-  String get premiumBenefitUnlimitedItems => 'Unlimited items in the catalog';
-
-  @override
   String get premiumBenefitUnlimitedScans => 'Unlimited AI photo analyses';
 
   @override
   String get premiumBenefitSupport => 'Support further development of the app';
 
   @override
-  String premiumLimitItemsReached(int limit) {
-    return 'The free plan is limited to $limit items. Upgrade to Premium to keep adding.';
-  }
-
-  @override
   String premiumLimitScansReached(int limit) {
     return 'The free plan includes $limit AI analyses per month. Upgrade to Premium for unlimited analyses.';
   }
-
-  @override
-  String premiumLimitDevicesReached(int limit) {
-    return 'The free plan supports $limit devices in a family group. Upgrade to Premium to connect more.';
-  }
-
-  @override
-  String get premiumBenefitFamilySync => 'Family sync across unlimited devices';
 
   @override
   String get premiumRestore => 'Restore purchases';
@@ -539,7 +523,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumActive => 'Premium is active: no limits';
 
   @override
-  String premiumUsageSummary(int items, int maxItems, int scans, int maxScans) {
-    return 'Free plan: $items/$maxItems items, $scans/$maxScans AI analyses this month';
+  String premiumUsageSummary(int scans, int maxScans) {
+    return 'Free plan: $scans/$maxScans AI analyses this month';
   }
 }

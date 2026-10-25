@@ -397,10 +397,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get premiumSubtitle => 'Снимите ограничения бесплатной версии';
 
   @override
-  String get premiumBenefitUnlimitedItems =>
-      'Неограниченное количество вещей в каталоге';
-
-  @override
   String get premiumBenefitUnlimitedScans =>
       'Неограниченные AI-анализы фотографий';
 
@@ -409,23 +405,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Поддержка дальнейшей разработки приложения';
 
   @override
-  String premiumLimitItemsReached(int limit) {
-    return 'В бесплатной версии можно хранить $limit вещей. Оформите Premium, чтобы добавлять дальше.';
-  }
-
-  @override
   String premiumLimitScansReached(int limit) {
     return 'В бесплатной версии доступно $limit AI-анализов в месяц. Оформите Premium для безлимита.';
   }
-
-  @override
-  String premiumLimitDevicesReached(int limit) {
-    return 'В бесплатной версии к семейной группе можно подключить $limit устройства. Оформите Premium, чтобы добавить больше.';
-  }
-
-  @override
-  String get premiumBenefitFamilySync =>
-      'Семейная синхронизация без ограничения по устройствам';
 
   @override
   String get premiumRestore => 'Восстановить покупки';
@@ -545,7 +527,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get premiumActive => 'Premium активен: без ограничений';
 
   @override
-  String premiumUsageSummary(int items, int maxItems, int scans, int maxScans) {
-    return 'Бесплатно: $items/$maxItems вещей, $scans/$maxScans AI-анализов в этом месяце';
+  String premiumUsageSummary(int scans, int maxScans) {
+    return 'Бесплатно: $scans/$maxScans AI-анализов в этом месяце';
   }
 }

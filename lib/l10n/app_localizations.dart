@@ -772,12 +772,6 @@ abstract class AppLocalizations {
   /// **'Remove the limits of the free plan'**
   String get premiumSubtitle;
 
-  /// No description provided for @premiumBenefitUnlimitedItems.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlimited items in the catalog'**
-  String get premiumBenefitUnlimitedItems;
-
   /// No description provided for @premiumBenefitUnlimitedScans.
   ///
   /// In en, this message translates to:
@@ -790,29 +784,11 @@ abstract class AppLocalizations {
   /// **'Support further development of the app'**
   String get premiumBenefitSupport;
 
-  /// No description provided for @premiumLimitItemsReached.
-  ///
-  /// In en, this message translates to:
-  /// **'The free plan is limited to {limit} items. Upgrade to Premium to keep adding.'**
-  String premiumLimitItemsReached(int limit);
-
   /// No description provided for @premiumLimitScansReached.
   ///
   /// In en, this message translates to:
   /// **'The free plan includes {limit} AI analyses per month. Upgrade to Premium for unlimited analyses.'**
   String premiumLimitScansReached(int limit);
-
-  /// No description provided for @premiumLimitDevicesReached.
-  ///
-  /// In en, this message translates to:
-  /// **'The free plan supports {limit} devices in a family group. Upgrade to Premium to connect more.'**
-  String premiumLimitDevicesReached(int limit);
-
-  /// No description provided for @premiumBenefitFamilySync.
-  ///
-  /// In en, this message translates to:
-  /// **'Family sync across unlimited devices'**
-  String get premiumBenefitFamilySync;
 
   /// No description provided for @premiumRestore.
   ///
@@ -1039,8 +1015,8 @@ abstract class AppLocalizations {
   /// No description provided for @premiumUsageSummary.
   ///
   /// In en, this message translates to:
-  /// **'Free plan: {items}/{maxItems} items, {scans}/{maxScans} AI analyses this month'**
-  String premiumUsageSummary(int items, int maxItems, int scans, int maxScans);
+  /// **'Free plan: {scans}/{maxScans} AI analyses this month'**
+  String premiumUsageSummary(int scans, int maxScans);
 }
 
 class _AppLocalizationsDelegate

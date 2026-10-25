@@ -164,9 +164,6 @@ class _ShelvesScreenState extends State<ShelvesScreen> {
 
       if (detectedItems.isNotEmpty) {
         if (!mounted) return;
-        if (!await ensureItemQuota(context, count: detectedItems.length)) {
-          return;
-        }
 
         await isar.writeTxn(() async {
           for (var itemMap in detectedItems) {

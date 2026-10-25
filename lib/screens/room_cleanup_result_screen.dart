@@ -327,11 +327,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                                             onTap: () async {
                                               Navigator.pop(context);
 
-                                              if (itemData.matchedIsarItemId == null &&
-                                                  !await ensureItemQuota(this.context)) {
-                                                return;
-                                              }
-
                                               // Сохраняем вещь в базу (логика аналогична кнопке "Положить на место")
                                               await isar.writeTxn(() async {
                                                 if (itemData.matchedIsarItemId != null) {
@@ -503,14 +498,6 @@ class _RoomCleanupResultScreenState extends State<RoomCleanupResultScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(l10n.selectCleanedItems)),
                     );
-                    return;
-                  }
-
-                  final newItemsCount = checkedItems
-                      .where((e) => e.matchedIsarItemId == null)
-                      .length;
-                  if (newItemsCount > 0 &&
-                      !await ensureItemQuota(context, count: newItemsCount)) {
                     return;
                   }
 

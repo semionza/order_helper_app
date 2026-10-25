@@ -390,31 +390,15 @@ class AppLocalizationsHe extends AppLocalizations {
   String get premiumSubtitle => 'הסרת המגבלות של הגרסה החינמית';
 
   @override
-  String get premiumBenefitUnlimitedItems => 'פריטים ללא הגבלה בקטלוג';
-
-  @override
   String get premiumBenefitUnlimitedScans => 'ניתוחי AI ללא הגבלה';
 
   @override
   String get premiumBenefitSupport => 'תמיכה בפיתוח המשך של האפליקציה';
 
   @override
-  String premiumLimitItemsReached(int limit) {
-    return 'בגרסה החינמית ניתן לשמור $limit פריטים. שדרגו ל-Premium כדי להמשיך להוסיף.';
-  }
-
-  @override
   String premiumLimitScansReached(int limit) {
     return 'הגרסה החינמית כוללת $limit ניתוחי AI בחודש. שדרגו ל-Premium לשימוש ללא הגבלה.';
   }
-
-  @override
-  String premiumLimitDevicesReached(int limit) {
-    return 'בגרסה החינמית ניתן לחבר $limit מכשירים לקבוצת משפחה. שדרגו ל-Premium כדי לחבר עוד.';
-  }
-
-  @override
-  String get premiumBenefitFamilySync => 'סנכרון משפחתי ללא הגבלת מכשירים';
 
   @override
   String get premiumRestore => 'שחזור רכישות';
@@ -532,7 +516,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get premiumActive => 'Premium פעיל: ללא מגבלות';
 
   @override
-  String premiumUsageSummary(int items, int maxItems, int scans, int maxScans) {
-    return 'חינם: $items/$maxItems פריטים, $scans/$maxScans ניתוחי AI החודש';
+  String premiumUsageSummary(int scans, int maxScans) {
+    return 'חינם: $scans/$maxScans ניתוחי AI החודש';
   }
 }

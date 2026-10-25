@@ -6,7 +6,6 @@ import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../app_config.dart';
 import '../main.dart';
 import '../models/item.dart';
 import '../models/room.dart';
@@ -15,7 +14,7 @@ import '../models/storage_unit.dart';
 import 'purchase_service.dart';
 
 /// Результат подключения устройства к семейной группе.
-enum JoinGroupResult { success, notFound, limitReached, error }
+enum JoinGroupResult { success, notFound, error }
 
 /// Результат фоновой синхронизации.
 enum SyncOutcome { notInGroup, pulled, pushed, failed }
@@ -28,8 +27,7 @@ enum SyncOutcome { notInGroup, pulled, pushed, failed }
 ///   group_members(id uuid pk, group_id uuid fk, device_id text,
 ///                 joined_at, unique(group_id, device_id))
 ///
-/// В клиенте используется только публичный publishable-ключ. Лимит устройств
-/// проверяется здесь для UX и должен дублироваться политиками RLS на сервере.
+/// В клиенте используется только публичный publishable-ключ.
 class SupabaseService {
   SupabaseService._();
 
@@ -108,21 +106,6 @@ class SupabaseService {
     return (await groupDevices(groupId)).contains(id);
   }
 
-  /// Можно ли подключить это устройство к группе с учётом бесплатного лимита.
-  /// Премиум владельца группы (`is_premium`) снимает ограничение для участников.
-  Future<bool> canRegisterDevice(String groupId) async {
-    if (PurchaseService.instance.isPremium.value) return true;
-
-    final group = await fetchGroup(groupId);
-    if (group == null) return false;
-    if (group['is_premium'] == true) return true;
-
-    final devices = await groupDevices(groupId);
-    final id = await deviceId();
-    if (devices.contains(id)) return true;
-    return devices.length < AppConfig.maxFreeGroupDevices;
-  }
-
   /// Создаёт группу, делает текущее устройство владельцем и выгружает каталог.
   /// Возвращает `group_id`, который передаётся второму устройству.
   Future<String?> createGroup() async {
@@ -153,21 +136,16 @@ class SupabaseService {
   }
 
   /// Подключает устройство к существующей группе по `group_id`.
-  /// Лимит участников дополнительно защищён триггером в базе данных.
   Future<JoinGroupResult> joinGroup(String groupId) async {
     final group = await fetchGroup(groupId);
     if (group == null) return JoinGroupResult.notFound;
 
     final id = await deviceId();
 
-    // Повторный вход уже подключённого устройства не создаёт новую запись:
-    // BEFORE INSERT триггер сработал бы даже при upsert по конфликту.
     if ((await groupDevices(groupId)).contains(id)) {
       await _setCurrentGroupId(groupId);
       return JoinGroupResult.success;
     }
-
-    if (!await canRegisterDevice(groupId)) return JoinGroupResult.limitReached;
 
     try {
       await client.from(_membersTable).insert({
@@ -176,18 +154,12 @@ class SupabaseService {
       });
     } on PostgrestException catch (e) {
       debugPrint('Supabase: не удалось подключить устройство: ${e.message}');
-      return _isMemberLimitError(e)
-          ? JoinGroupResult.limitReached
-          : JoinGroupResult.error;
+      return JoinGroupResult.error;
     }
 
     await _setCurrentGroupId(groupId);
     return JoinGroupResult.success;
   }
-
-  /// Ошибка триггера `check_group_member_limit` (plpgsql `raise exception` → P0001).
-  bool _isMemberLimitError(PostgrestException e) =>
-      e.code == 'P0001' || e.message.contains('Free plan limit reached');
 
   Future<void> leaveGroup() async {
     final groupId = await currentGroupId();

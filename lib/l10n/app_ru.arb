@@ -112,13 +112,9 @@
   "addItemPlaceholder": "Здесь будет форма для добавления нового предмета",
   "premiumTitle": "Order Guide Premium",
   "premiumSubtitle": "Снимите ограничения бесплатной версии",
-  "premiumBenefitUnlimitedItems": "Неограниченное количество вещей в каталоге",
   "premiumBenefitUnlimitedScans": "Неограниченные AI-анализы фотографий",
   "premiumBenefitSupport": "Поддержка дальнейшей разработки приложения",
-  "premiumLimitItemsReached": "В бесплатной версии можно хранить {limit} вещей. Оформите Premium, чтобы добавлять дальше.",
   "premiumLimitScansReached": "В бесплатной версии доступно {limit} AI-анализов в месяц. Оформите Premium для безлимита.",
-  "premiumLimitDevicesReached": "В бесплатной версии к семейной группе можно подключить {limit} устройства. Оформите Premium, чтобы добавить больше.",
-  "premiumBenefitFamilySync": "Семейная синхронизация без ограничения по устройствам",
   "premiumRestore": "Восстановить покупки",
   "premiumMaybeLater": "Может быть позже",
   "premiumRetry": "Повторить",
@@ -156,5 +152,5 @@
   "joinNotFound": "Пространство по этому коду не найдено.",
   "joinFailed": "Не удалось подключиться к пространству.",
   "premiumActive": "Premium активен: без ограничений",
-  "premiumUsageSummary": "Бесплатно: {items}/{maxItems} вещей, {scans}/{maxScans} AI-анализов в этом месяце"
+  "premiumUsageSummary": "Бесплатно: {scans}/{maxScans} AI-анализов в этом месяце"
 }
